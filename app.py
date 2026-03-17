@@ -31,7 +31,10 @@ from langchain_chroma import Chroma
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 RAW_DOCS_DIR = DATA_DIR / "raw_docs"
-DB_DIR = str(DATA_DIR / "chroma_db")
+
+# No Streamlit Cloud /mount/src é read-only — usa /tmp que é gravável
+_on_cloud = Path("/mount/src").exists()
+DB_DIR = "/tmp/chroma_db" if _on_cloud else str(DATA_DIR / "chroma_db")
 COLLECTION_NAME = os.getenv("COLLECTION_NAME", "diet_knowledge")
 EMBED_MODEL = os.getenv("EMBED_MODEL", "paraphrase-multilingual-mpnet-base-v2")
 

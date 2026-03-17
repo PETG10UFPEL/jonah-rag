@@ -16,8 +16,11 @@ from dotenv import load_dotenv
 load_dotenv(".env.local", override=True)
 
 BASE_DIR = Path(__file__).resolve().parent
+
+# No Streamlit Cloud /mount/src é read-only — usa /tmp que é gravável
+_on_cloud = Path("/mount/src").exists()
 RAW_DIR_DEFAULT = str(BASE_DIR / "data" / "raw_docs")
-DB_DIR_DEFAULT  = str(BASE_DIR / "data" / "chroma_db")
+DB_DIR_DEFAULT  = "/tmp/chroma_db" if _on_cloud else str(BASE_DIR / "data" / "chroma_db")
 COLLECTION_NAME = os.getenv("COLLECTION_NAME", "diet_knowledge")
 
 # Modelo multilíngue — roda local, sem API key, sem limite de cota
