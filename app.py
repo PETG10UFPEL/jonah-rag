@@ -16,6 +16,8 @@ try:
         os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
     if "GDRIVE_FOLDER_ID" in st.secrets:
         os.environ["GDRIVE_FOLDER_ID"] = st.secrets["GDRIVE_FOLDER_ID"]
+    if "HF_TOKEN" in st.secrets:
+        os.environ["HF_TOKEN"] = st.secrets["HF_TOKEN"]
 except Exception:
     pass
 
@@ -305,7 +307,7 @@ st.markdown("""
   desenvolvido em parceria entre a Secretaria Municipal de Saúde e os projetos
   <strong>Amor à Pele</strong> e
   <a href="https://www.instagram.com/g10petsaude/" target="_blank">PET UFPel Saúde Digital</a> &mdash;
-  Telemonitoramento de Feridas Crônicas<br>, coordenados pela professora <a href="https://institucional.ufpel.edu.br/servidores/id/2858" target="_blank">Adrize Rutz Porto</a>,
+  Telemonitoramento de Feridas Crônicas, coordenados pela professora <a href="https://institucional.ufpel.edu.br/servidores/id/2858" target="_blank">Adrize Rutz Porto</a>,
   da Faculdade de Enfermagem &ndash; UFPel.
 </p>
 """, unsafe_allow_html=True)
