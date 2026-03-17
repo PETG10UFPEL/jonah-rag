@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Embeddings — Guia de Feridas Crônicas · Pelotas</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&family=DM+Mono:wght@400;500&family=Playfair+Display:wght@700;900&display=swap');
+
+  :root {
+    --verde:    #1a7a5e;
+    --verde-md: #25a07a;
+    --verde-lt: #d0f0e8;
+    --verde-xlt:#edfaf5;
+    --azul:     #1b4f72;
+    --azul-lt:  #d6e8f7;
+    --vermelho: #c0392b;
+    --amarelo:  #e67e22;
+    --cinza:    #f4f6f8;
+    --borda:    #d5dfe8;
+    --texto:    #1c2b3a;
+    --sub:      #4f6470;
+    --bg:       #f2f5f7;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--texto);
+    padding: 32px 20px 60px;
+    min-height: 100vh;
+  }
+
+  .page { max-width: 920px; margin: 0 auto; }
+
+  /* ─── TOPO INSTITUCIONAL ─── */
+  .topo-inst {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--verde);
+    border-radius: 14px;
+    padding: 16px 24px;
+    margin-bottom: 28px;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .topo-inst .brasao {
+    font-size: 32px;
+    flex-shrink: 0;
+  }
+  .topo-inst .inst-text { flex: 1; min-width: 200px; }
+  .topo-inst .inst-nome {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    color: #ffffff;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+  .topo-inst .inst-sub {
+    font-size: 12px;
+    color: #a8dfce;
+    margin-top: 2px;
+  }
+  .topo-inst .inst-badge {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 12px;
+    color: #ffffff;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  /* ─── HEADER ─── */
+  .header {
+    text-align: center;
+    margin-bottom: 38px;
+  }
+  .header .tag {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--verde), var(--verde-md));
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 6px 18px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+  }
+  .header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px;
+    font-weight: 900;
+    line-height: 1.15;
+    color: var(--azul);
+  }
+  .header h1 span {
+    color: var(--verde);
+  }
+  .header p { color: var(--sub); font-size: 15px; margin-top: 10px; line-height: 1.6; }
+  .header .ref-manual {
+    display: inline-block;
+    margin-top: 12px;
+    background: var(--verde-xlt);
+    border: 1px solid #9ddcca;
+    border-radius: 10px;
+    padding: 8px 16px;
+    font-size: 12px;
+    color: var(--verde);
+    font-weight: 600;
+  }
+
+  /* ─── SECTION TITLE ─── */
+  .section-title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--verde);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, #9ddcca55, transparent);
+  }
+
+  /* ─── CARD ─── */
+  .card {
+    background: #ffffff;
+    border: 1px solid var(--borda);
+    border-radius: 16px;
+    padding: 26px;
+    margin-bottom: 22px;
+    box-shadow: 0 4px 18px rgba(28,43,58,0.06);
+  }
+
+  /* ─── ANALOGY BOX ─── */
+  .analogy-box {
+    display: grid;
+    grid-template-columns: 1fr 56px 1fr;
+    align-items: center;
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .analogy-side {
+    background: var(--cinza);
+    border: 1px solid var(--borda);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+  }
+  .analogy-side .emoji { font-size: 30px; margin-bottom: 8px; }
+  .analogy-side .label { font-size: 12px; color: var(--sub); margin-bottom: 4px; }
+  .analogy-side .value { font-size: 13px; font-weight: 600; color: var(--texto); }
+  .arrow-mid { text-align: center; font-size: 26px; color: var(--verde); }
+
+  /* ─── WORD VECTORS ─── */
+  .word-row { display: flex; align-items: center; gap: 7px; margin: 8px 0; }
+  .word-label { font-weight: 700; font-size: 12px; min-width: 200px; color: var(--texto); }
+  .vec-cell {
+    background: var(--cinza);
+    border: 1px solid var(--borda);
+    border-radius: 6px;
+    padding: 4px 7px;
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    color: var(--azul);
+    min-width: 50px;
+    text-align: center;
+  }
+  .vec-cell.neg { color: var(--vermelho); }
+  .vec-cell.hi  { border-color: var(--verde); background: var(--verde-lt); color: var(--verde); font-weight: 700; }
+  .dim-label { font-size: 10px; color: var(--sub); text-align: center; min-width: 50px; }
+
+  /* ─── PIPELINE ─── */
+  .pipeline { display: flex; align-items: stretch; gap: 0; overflow-x: auto; padding: 8px 0; }
+  .pipe-step {
+    flex: 1;
+    min-width: 118px;
+    background: #ffffff;
+    border: 1px solid var(--borda);
+    border-radius: 12px;
+    padding: 15px 10px;
+    text-align: center;
+    position: relative;
+  }
+  .pipe-step + .pipe-step { margin-left: 10px; }
+  .pipe-step::after {
+    content: '→';
+    position: absolute;
+    right: -14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 17px;
+    color: var(--verde);
+    z-index: 2;
+  }
+  .pipe-step:last-child::after { display: none; }
+  .pipe-icon { font-size: 26px; margin-bottom: 8px; }
+  .pipe-title { font-size: 11px; font-weight: 700; color: var(--texto); margin-bottom: 4px; }
+  .pipe-desc { font-size: 10px; color: var(--sub); line-height: 1.4; }
+  .pipe-step.hl { background: var(--azul); border-color: var(--verde-md); }
+  .pipe-step.hl .pipe-title { color: #a8dfce; }
+  .pipe-step.hl .pipe-desc { color: #78c4a8; }
+
+  /* ─── RAG FLOW ─── */
+  .rag-flow { display: grid; grid-template-columns: 1fr; gap: 11px; }
+  .rag-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #ffffff;
+    border: 1px solid var(--borda);
+    border-radius: 12px;
+    padding: 14px 18px;
+  }
+  .rag-num {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--verde), var(--verde-md));
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 14px; flex-shrink: 0; color: white;
+  }
+  .rag-content { flex: 1; }
+  .rag-title { font-size: 14px; font-weight: 700; color: var(--texto); margin-bottom: 2px; }
+  .rag-desc { font-size: 12px; color: var(--sub); line-height: 1.4; }
+  .rag-badge {
+    font-size: 11px; font-weight: 700;
+    background: var(--azul); color: #a8dfce;
+    border: 1px solid rgba(168,223,206,0.35);
+    padding: 3px 10px; border-radius: 20px; white-space: nowrap;
+  }
+
+  /* ─── SIMILARITY ─── */
+  .sim-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 14px; }
+  .sim-card {
+    background: #ffffff;
+    border: 1px solid var(--borda);
+    border-radius: 12px;
+    padding: 14px;
+    text-align: center;
+  }
+  .sim-emoji { font-size: 22px; margin-bottom: 6px; }
+  .sim-text { font-size: 12px; color: var(--sub); margin-bottom: 8px; line-height: 1.4; }
+  .sim-bar-bg { background: #e2e8f0; border-radius: 4px; height: 7px; overflow: hidden; }
+  .sim-bar { height: 100%; border-radius: 4px; }
+  .sim-pct { font-size: 12px; font-weight: 700; margin-top: 4px; }
+
+  /* ─── WHY GRID ─── */
+  .why-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+  .why-card { background: var(--cinza); border: 1px solid var(--borda); border-radius: 12px; padding: 16px; }
+  .why-card .icon { font-size: 22px; margin-bottom: 8px; }
+  .why-card .title { font-size: 13px; font-weight: 700; color: var(--texto); margin-bottom: 4px; }
+  .why-card .desc { font-size: 12px; color: var(--sub); line-height: 1.5; }
+
+  /* ─── SCATTER ─── */
+  .scatter-wrap { display: flex; gap: 20px; align-items: flex-start; margin-top: 14px; }
+  .scatter-box {
+    flex: 1; background: #ffffff; border: 1px solid var(--borda);
+    border-radius: 12px; position: relative; height: 200px; overflow: hidden;
+  }
+  .scatter-box .ax { position: absolute; background: var(--borda); }
+  .scatter-box .ax-x { bottom: 24px; left: 12px; right: 12px; height: 1px; }
+  .scatter-box .ax-y { top: 12px; bottom: 12px; left: 34px; width: 1px; }
+  .dot { position: absolute; width: 11px; height: 11px; border-radius: 50%; transform: translate(-50%, -50%); }
+  .dot-label { position: absolute; font-size: 9px; font-weight: 700; transform: translate(-50%, -150%); white-space: nowrap; }
+  .scatter-legend { width: 175px; font-size: 11px; color: var(--sub); }
+  .legend-item { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  /* ─── CONCEPT GRID ─── */
+  .concept-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
+  .concept-card { border-radius: 12px; padding: 14px; border: 1px solid; text-align: center; }
+  .c-emoji { font-size: 22px; margin-bottom: 6px; }
+  .c-term { font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+  .c-desc { font-size: 11px; line-height: 1.45; color: var(--sub); }
+
+  /* ─── HIGHLIGHT BOX ─── */
+  .highlight-box {
+    background: var(--azul);
+    border: 1px solid rgba(168,223,206,0.3);
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin: 14px 0;
+  }
+
+  /* ─── FONTE REF ─── */
+  .fonte-ref {
+    background: var(--verde-xlt);
+    border: 1px solid #9ddcca;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 12px;
+    color: var(--verde);
+    margin-top: 14px;
+    line-height: 1.6;
+  }
+  .fonte-ref strong { color: #145a41; }
+
+  /* ─── FOOTER ─── */
+  .footer-note {
+    background: linear-gradient(135deg, var(--verde-xlt), #ffffff);
+    border: 1px solid #9ddcca;
+    border-radius: 14px;
+    padding: 20px 26px;
+    margin-top: 24px;
+    font-size: 13px;
+    color: var(--sub);
+    line-height: 1.75;
+  }
+  .footer-note strong { color: var(--verde); }
+  .footer-note code {
+    background: var(--cinza);
+    border: 1px solid var(--borda);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--azul);
+  }
+
+  @media (max-width: 600px) {
+    .analogy-box  { grid-template-columns: 1fr; }
+    .arrow-mid    { transform: rotate(90deg); }
+    .why-grid     { grid-template-columns: 1fr; }
+    .sim-grid     { grid-template-columns: 1fr; }
+    .concept-grid { grid-template-columns: 1fr 1fr; }
+    .scatter-wrap { flex-direction: column; }
+    .scatter-legend { width: 100%; }
+    .header h1    { font-size: 26px; }
+    .topo-inst    { flex-direction: column; text-align: center; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- TOPO INSTITUCIONAL -->
+  <div class="topo-inst">
+    <div class="brasao">🏛️</div>
+    <div class="inst-text">
+      <div class="inst-nome">Prefeitura Municipal de Pelotas<br>Secretaria Municipal de Saúde</div>
+      <div class="inst-sub">Programa de Telemonitoramento de Feridas Crônicas</div>
+    </div>
+    <div class="inst-badge">🐍 Sistema Python · RAG-AI</div>
+  </div>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="tag">🩹 Guia Técnico-Educativo — RAG-AI</div>
+    <h1>Embeddings no <span>Guia de Feridas</span><br>de Pelotas</h1>
+    <p>Como o sistema Python entende o protocolo municipal e responde com precisão clínica<br>para profissionais e agentes de saúde da rede pública</p>
+    <div class="ref-manual">📄 Base de conhecimento: Manual de Padronização de Curativos (SMS-SP, 2021) + protocolos locais</div>
+  </div>
+
+  <!-- SEÇÃO 1: O QUE É UM EMBEDDING -->
+  <div class="section-title">01 — O que é um Embedding?</div>
+  <div class="card">
+    <p style="color:var(--sub); font-size:14px; line-height:1.75; margin-bottom:18px;">
+      Um <strong style="color:var(--verde)">embedding</strong> transforma palavras, frases ou documentos inteiros em uma lista de números (vetor).
+      Esses números <em>capturam o significado semântico</em> — conceitos relacionados ficam matematicamente próximos,
+      mesmo que as palavras sejam diferentes. É assim que o sistema Python de Pelotas <em>lê</em> o protocolo de curativos
+      e entende perguntas clínicas sem precisar de palavras exatas.
+    </p>
+
+    <div class="analogy-box">
+      <div class="analogy-side">
+        <div class="emoji">📄</div>
+        <div class="label">Trecho do Protocolo Municipal</div>
+        <div class="value">"Ferida com esfacelo amarelado, exsudato moderado, bordas descoladas — indicar hidrofibra"</div>
+      </div>
+      <div class="arrow-mid">⟶</div>
+      <div class="analogy-side">
+        <div class="emoji">🔢</div>
+        <div class="label">Embedding (simplificado)</div>
+        <div class="value" style="font-family:'DM Mono',monospace; color:var(--verde); font-size:12px;">[0.8, −0.2, 0.9, 0.6, −0.1, 0.7, ...]</div>
+      </div>
+    </div>
+
+    <!-- WORD VECTORS TABLE -->
+    <p style="font-size:12px; color:var(--sub); margin:18px 0 8px;">
+      Exemplo — dimensões semânticas de conceitos do protocolo de Pelotas (valores simplificados):
+    </p>
+    <div style="overflow-x:auto;">
+      <div style="display:flex; gap:7px; margin-bottom:4px; margin-left:208px;">
+        <div class="dim-label">pressão</div>
+        <div class="dim-label">infecção</div>
+        <div class="dim-label">exsudato</div>
+        <div class="dim-label">desbrid.</div>
+        <div class="dim-label">curativo</div>
+        <div class="dim-label">isquemia</div>
+      </div>
+      <div class="word-row">
+        <div class="word-label">🛏️ Úlcera por pressão (UP)</div>
+        <div class="vec-cell hi">0.9</div>
+        <div class="vec-cell">0.4</div>
+        <div class="vec-cell">0.5</div>
+        <div class="vec-cell neg">−0.1</div>
+        <div class="vec-cell">0.6</div>
+        <div class="vec-cell">0.3</div>
+      </div>
+      <div class="word-row">
+        <div class="word-label">🦠 Ferida infectada (esfacelo)</div>
+        <div class="vec-cell neg">−0.1</div>
+        <div class="vec-cell hi">0.9</div>
+        <div class="vec-cell">0.7</div>
+        <div class="vec-cell">0.6</div>
+        <div class="vec-cell">0.8</div>
+        <div class="vec-cell neg">−0.2</div>
+      </div>
+      <div class="word-row">
+        <div class="word-label">🩸 Úlcera arterial/isquêmica</div>
+        <div class="vec-cell">0.2</div>
+        <div class="vec-cell">0.5</div>
+        <div class="vec-cell neg">−0.3</div>
+        <div class="vec-cell neg">−0.4</div>
+        <div class="vec-cell">0.4</div>
+        <div class="vec-cell hi">0.9</div>
+      </div>
+      <div class="word-row">
+        <div class="word-label">🧹 Necrose seca (escara)</div>
+        <div class="vec-cell">0.5</div>
+        <div class="vec-cell">0.3</div>
+        <div class="vec-cell neg">−0.4</div>
+        <div class="vec-cell hi">0.9</div>
+        <div class="vec-cell">0.5</div>
+        <div class="vec-cell">0.6</div>
+      </div>
+    </div>
+
+    <!-- 2D SCATTER -->
+    <p style="font-size:12px; color:var(--sub); margin:22px 0 8px;">
+      Redução para 2D — conceitos do protocolo de Pelotas se agrupam naturalmente no espaço vetorial:
+    </p>
+    <div class="scatter-wrap">
+      <div class="scatter-box">
+        <div class="ax ax-x"></div>
+        <div class="ax ax-y"></div>
+
+        <!-- Cluster: úlceras por pressão -->
+        <div class="dot" style="background:#1a7a5e; left:24%; top:26%;"></div>
+        <div class="dot-label" style="color:#1a7a5e; left:24%; top:26%;">🛏️ UP</div>
+        <div class="dot" style="background:#25a07a; left:18%; top:38%;"></div>
+        <div class="dot-label" style="color:#25a07a; left:18%; top:38%;">📐 Escala Braden</div>
+        <div class="dot" style="background:#4db891; left:32%; top:20%;"></div>
+        <div class="dot-label" style="color:#4db891; left:32%; top:20%;">🔄 Decúbito/Colchão</div>
+
+        <!-- Cluster: curativos / produtos SMS -->
+        <div class="dot" style="background:#1b4f72; left:52%; top:68%;"></div>
+        <div class="dot-label" style="color:#1b4f72; left:52%; top:68%;">🩹 Hidrofibra Ag</div>
+        <div class="dot" style="background:#2471a3; left:62%; top:74%;"></div>
+        <div class="dot-label" style="color:#2471a3; left:62%; top:74%;">🫧 Espuma Silicone</div>
+        <div class="dot" style="background:#5b9bce; left:44%; top:78%;"></div>
+        <div class="dot-label" style="color:#5b9bce; left:44%; top:78%;">💧 PHMB Gel</div>
+
+        <!-- Cluster: infecção/desbridamento -->
+        <div class="dot" style="background:#c0392b; left:74%; top:28%;"></div>
+        <div class="dot-label" style="color:#c0392b; left:74%; top:28%;">🦠 Infecção</div>
+        <div class="dot" style="background:#e74c3c; left:80%; top:20%;"></div>
+        <div class="dot-label" style="color:#e74c3c; left:80%; top:20%;">💀 Necrose/Escara</div>
+        <div class="dot" style="background:#e67e22; left:76%; top:38%;"></div>
+        <div class="dot-label" style="color:#e67e22; left:76%; top:38%;">🧹 Desbridamento</div>
+
+        <div style="position:absolute; bottom:4px; right:8px; font-size:9px; color:var(--sub);">dimensão 1 →</div>
+        <div style="position:absolute; top:8px; left:4px; font-size:9px; color:var(--sub); writing-mode:vertical-rl; transform:rotate(180deg);">dimensão 2 →</div>
+      </div>
+      <div class="scatter-legend">
+        <p style="font-size:11px; font-weight:700; color:var(--texto); margin-bottom:8px;">Clusters formados:</p>
+        <div class="legend-item"><div class="legend-dot" style="background:#1a7a5e;"></div><span>Úlceras por pressão + prevenção</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:#1b4f72;"></div><span>Curativos padronizados (SMS)</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:#c0392b;"></div><span>Infecção, necrose e desbridamento</span></div>
+        <p style="font-size:11px; color:var(--sub); margin-top:10px; line-height:1.5;">
+          A IA aprende que <strong style="color:var(--verde)">Escara</strong> e <strong style="color:var(--verde)">necrose seca</strong>
+          são o mesmo conceito, mesmo sem ninguém mapear isso explicitamente!
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEÇÃO 2: CONCEITOS INDEXADOS DO PROTOCOLO DE PELOTAS -->
+  <div class="section-title">02 — Conceitos do Protocolo Indexados pelo Sistema</div>
+  <div class="card">
+    <p style="color:var(--sub); font-size:14px; line-height:1.75; margin-bottom:16px;">
+      O sistema Python indexa o <strong style="color:var(--azul)">protocolo municipal de Pelotas</strong>, enriquecido com o Manual SMS-SP (2021)
+      como referência técnica nacional. Cada conceito abaixo está representado como vetor na base de dados local.
+    </p>
+    <div class="concept-grid">
+      <div class="concept-card" style="border-color:#1a7a5e55; background:#edfaf5;">
+        <div class="c-emoji">🛏️</div>
+        <div class="c-term" style="color:#145a41;">Úlceras por Pressão</div>
+        <div class="c-desc">Estágios I–IV, sem estágio, Escala Braden, mudança de decúbito, espumas preventivas</div>
+      </div>
+      <div class="concept-card" style="border-color:#e67e2255; background:#fef9f0;">
+        <div class="c-emoji">🩺</div>
+        <div class="c-term" style="color:#b45309;">Avaliação RYB</div>
+        <div class="c-desc">Sistema Vermelho/Amarelo/Preto: proteger granulação, limpar esfacelo, desbridar escara</div>
+      </div>
+      <div class="concept-card" style="border-color:#c0392b55; background:#fdf2f0;">
+        <div class="c-emoji">🦠</div>
+        <div class="c-term" style="color:#922b21;">Infecção e Biofilme</div>
+        <div class="c-desc">Critérios diagnósticos, carga bacteriana >10⁵ CFU, técnica de Levine, PHMB, prata</div>
+      </div>
+      <div class="concept-card" style="border-color:#1b4f7255; background:#eaf3fb;">
+        <div class="c-emoji">🩹</div>
+        <div class="c-term" style="color:#1b4f72;">Curativos Padronizados</div>
+        <div class="c-desc">Hidrofibra Ag, espumas c/silicone, alginato, PHMB gel, membranas de biocelulose, NPWT</div>
+      </div>
+      <div class="concept-card" style="border-color:#25a07a55; background:#e8faf5;">
+        <div class="c-emoji">🔄</div>
+        <div class="c-term" style="color:#1a7a5e;">Fases da Cicatrização</div>
+        <div class="c-desc">Inflamação → Proliferação → Remodelagem. Critério de cronicidade: >3 semanas sem fechamento</div>
+      </div>
+      <div class="concept-card" style="border-color:#8e44ad55; background:#f5f0fa;">
+        <div class="c-emoji">🧹</div>
+        <div class="c-term" style="color:#6c3483;">Desbridamento</div>
+        <div class="c-desc">Cirúrgico, enzimático, autolítico, mecânico — contraindicações, membros isquêmicos</div>
+      </div>
+      <div class="concept-card" style="border-color:#27ae6055; background:#eafaf1;">
+        <div class="c-emoji">🥗</div>
+        <div class="c-term" style="color:#1e8449;">Nutrição Cicatricial</div>
+        <div class="c-desc">Albumina sérica, aminoácidos, vitaminas C/K/A/E, zinco por fase de cicatrização</div>
+      </div>
+      <div class="concept-card" style="border-color:#2980b955; background:#eaf4fb;">
+        <div class="c-emoji">👩‍⚕️</div>
+        <div class="c-term" style="color:#1a5276;">Atribuições da Equipe</div>
+        <div class="c-desc">Enfermeiro, técnico/auxiliar, médico — prescrição, execução, encaminhamentos, COFEN</div>
+      </div>
+      <div class="concept-card" style="border-color:#e67e2255; background:#fef9f0;">
+        <div class="c-emoji">📏</div>
+        <div class="c-term" style="color:#b45309;">Morfologia e Mensuração</div>
+        <div class="c-desc">Comprimento × largura × profundidade, cavidades, tunelizações, técnica de SF 0,9%</div>
+      </div>
+    </div>
+
+    <div class="fonte-ref">
+      <strong>📚 Fontes indexadas pelo sistema:</strong> Manual de Padronização de Curativos — SMS São Paulo (Jan/2021) · EPUAP/NPIAP/PPPIA 2019 · COFEN Res. 159 · protocolos locais da SMS Pelotas. O sistema só responde com base nesses documentos — nada é inventado.
+    </div>
+  </div>
+
+  <!-- SEÇÃO 3: POR QUE O SISTEMA DE PELOTAS PRECISA DE EMBEDDINGS -->
+  <div class="section-title">03 — Por que o Sistema de Pelotas precisa de Embeddings?</div>
+  <div class="card">
+    <p style="color:var(--sub); font-size:14px; line-height:1.75; margin-bottom:16px;">
+      Um profissional de saúde da rede municipal pode perguntar de muitas formas sobre o mesmo assunto.
+      Os embeddings garantem que o sistema encontre a resposta certa — mesmo quando a pergunta usa
+      linguagem popular, abreviações ou termos diferentes dos documentos indexados.
+    </p>
+    <div class="why-grid">
+      <div class="why-card">
+        <div class="icon">🔍</div>
+        <div class="title">Busca por Significado</div>
+        <div class="desc">O sistema entende que "ferida preta e seca", "escara" e "necrose de coagulação" são o mesmo conceito — sem necessidade de correspondência exata de palavras.</div>
+      </div>
+      <div class="why-card">
+        <div class="icon">📋</div>
+        <div class="title">Protocolo de Pelotas Indexado</div>
+        <div class="desc">Os curativos padronizados da SMS-Pelotas, fluxos de solicitação de insumos, atribuições por categoria profissional e códigos SUPRI estão todos disponíveis ao sistema.</div>
+      </div>
+      <div class="why-card">
+        <div class="icon">🎯</div>
+        <div class="title">Resposta Precisa e Local</div>
+        <div class="desc">A IA recupera exatamente o produto e conduta certa para cada tipo de ferida conforme o que está disponível na rede pública de Pelotas — não protocolos genéricos da internet.</div>
+      </div>
+      <div class="why-card">
+        <div class="icon">🛡️</div>
+        <div class="title">Sem "Alucinação Clínica"</div>
+        <div class="desc">Sem embeddings, a IA poderia indicar curativos inexistentes na rede ou conduta incorreta. Com eles, ela só responde com base nos documentos reais do município.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEÇÃO 4: SIMILARIDADE -->
+  <div class="section-title">04 — Como a Similaridade Funciona na Prática</div>
+  <div class="card">
+    <p style="color:var(--sub); font-size:14px; line-height:1.7;">
+      Quando o profissional faz uma pergunta, ela também é transformada em embedding. O sistema Python
+      compara matematicamente com os trechos indexados do protocolo e recupera os mais relevantes.
+    </p>
+
+    <div class="highlight-box">
+      <p style="font-size:12px; color:#78c4a8; margin-bottom:6px;">❓ Pergunta do profissional da UBS:</p>
+      <p style="font-size:15px; font-weight:600; color:#f0f9ff;">"Qual curativo usar em ferida com muito exsudato e cheiro ruim?"</p>
+      <p style="font-size:12px; color:#a8dfce; margin-top:6px;">→ Vira vetor: [0.2, 0.9, 0.8, 0.1, 0.7, −0.1, ...]</p>
+    </div>
+
+    <div class="sim-grid">
+      <div class="sim-card">
+        <div class="sim-emoji">📄</div>
+        <div class="sim-text">Antimicrobianos (prata/PHMB) para feridas infectadas com exsudato intenso — Manual SMS-SP p. 49</div>
+        <div class="sim-bar-bg"><div class="sim-bar" style="width:93%; background:linear-gradient(to right, var(--verde), var(--verde-md));"></div></div>
+        <div class="sim-pct" style="color:var(--verde);">93% similar ✓</div>
+      </div>
+      <div class="sim-card">
+        <div class="sim-emoji">📄</div>
+        <div class="sim-text">Diagnóstico de infecção: odor fétido, aumento de drenagem, tecido friável — protocolo Pelotas</div>
+        <div class="sim-bar-bg"><div class="sim-bar" style="width:81%; background:linear-gradient(to right, var(--azul), #2471a3);"></div></div>
+        <div class="sim-pct" style="color:var(--azul);">81% similar ✓</div>
+      </div>
+      <div class="sim-card">
+        <div class="sim-emoji">📄</div>
+        <div class="sim-text">Escala Braden — avaliação de risco de lesão por pressão</div>
+        <div class="sim-bar-bg"><div class="sim-bar" style="width:12%; background:#ef4444;"></div></div>
+        <div class="sim-pct" style="color:#ef4444;">12% similar ✗</div>
+      </div>
+    </div>
+
+    <p style="font-size:12px; color:var(--sub); margin-top:14px; line-height:1.6;">
+      ✅ O sistema prioriza corretamente o conteúdo sobre <strong>infecção e curativos antimicrobianos</strong>
+      e descarta o trecho sobre Escala Braden, irrelevante para essa pergunta.
+    </p>
+  </div>
+
+  <!-- SEÇÃO 5: PIPELINE RAG COMPLETO -->
+  <div class="section-title">05 — Pipeline Python Completo: RAG para o Sistema de Pelotas</div>
+  <div class="card">
+    <p style="color:var(--sub); font-size:13px; line-height:1.65; margin-bottom:22px;">
+      <strong style="color:var(--vermelho)">RAG = Retrieval Augmented Generation</strong> — o sistema Python primeiro
+      <em>busca</em> nos documentos do protocolo municipal indexados, depois <em>gera</em> a resposta com base no que encontrou.
+      O resultado é uma orientação clínica fundamentada no protocolo real de Pelotas, não em dados genéricos da internet.
+    </p>
+
+    <!-- FASE 1 -->
+    <p style="font-size:11px; font-weight:700; color:var(--sub); margin-bottom:10px; text-transform:uppercase; letter-spacing:1px;">
+      Fase 1 — Indexação (feita pela equipe de TI, uma única vez)
+    </p>
+    <div class="pipeline">
+      <div class="pipe-step">
+        <div class="pipe-icon">📁</div>
+        <div class="pipe-title">Documentos</div>
+        <div class="pipe-desc">PDFs do protocolo municipal, Manual SMS-SP, tabelas SUPRI, fluxogramas</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-icon">✂️</div>
+        <div class="pipe-title">Chunking</div>
+        <div class="pipe-desc">Divide em trechos de ~900 tokens com sobreposição de 150 tokens</div>
+      </div>
+      <div class="pipe-step hl">
+        <div class="pipe-icon">🧮</div>
+        <div class="pipe-title">Embeddings</div>
+        <div class="pipe-desc">Modelo de embedding transforma cada trecho em vetor numérico de alta dimensão</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-icon">🗄️</div>
+        <div class="pipe-title">Vector DB</div>
+        <div class="pipe-desc">Vetores salvos no Chroma DB (servidor local da SMS Pelotas)</div>
+      </div>
+    </div>
+
+    <div style="height:1px; background:var(--borda); margin:22px 0;"></div>
+
+    <!-- FASE 2 -->
+    <p style="font-size:11px; font-weight:700; color:var(--sub); margin-bottom:10px; text-transform:uppercase; letter-spacing:1px;">
+      Fase 2 — Resposta em tempo real (cada consulta do profissional de saúde)
+    </p>
+    <div class="rag-flow">
+      <div class="rag-row">
+        <div class="rag-num">1</div>
+        <div class="rag-content">
+          <div class="rag-title">Profissional de saúde faz uma pergunta</div>
+          <div class="rag-desc">"Quais curativos estão disponíveis na SMS Pelotas para úlcera venosa com exsudato moderado?"</div>
+        </div>
+        <div class="rag-badge">💬 Input</div>
+      </div>
+      <div class="rag-row">
+        <div class="rag-num">2</div>
+        <div class="rag-content">
+          <div class="rag-title">Pergunta vira Embedding (Python)</div>
+          <div class="rag-desc">O mesmo modelo de embedding usado na indexação transforma a pergunta em vetor compatível com o banco de dados</div>
+        </div>
+        <div class="rag-badge">🧮 Embedding</div>
+      </div>
+      <div class="rag-row">
+        <div class="rag-num">3</div>
+        <div class="rag-content">
+          <div class="rag-title">Busca Semântica no Chroma DB local</div>
+          <div class="rag-desc">O sistema encontra os 4–5 trechos mais similares do protocolo municipal, com score de relevância por similaridade de cosseno</div>
+        </div>
+        <div class="rag-badge">🔍 Retrieval</div>
+      </div>
+      <div class="rag-row">
+        <div class="rag-num">4</div>
+        <div class="rag-content">
+          <div class="rag-title">LLM Gera Resposta Baseada no Protocolo</div>
+          <div class="rag-desc">
+            Recebe: <em>pergunta + contexto clínico + trechos recuperados do protocolo de Pelotas</em> →
+            gera resposta citando o produto padronizado, código SUPRI quando aplicável, e orientações de uso
+          </div>
+        </div>
+        <div class="rag-badge">✨ Generation</div>
+      </div>
+      <div class="rag-row">
+        <div class="rag-num">5</div>
+        <div class="rag-content">
+          <div class="rag-title">Profissional recebe resposta com fontes e pode exportar</div>
+          <div class="rag-desc">
+            Resposta fundamentada no protocolo real, indicando o produto disponível na rede, frequência de troca,
+            cuidados peri-lesionais e encaminhamentos quando necessário
+          </div>
+        </div>
+        <div class="rag-badge">📲 Output</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEÇÃO 6: COM RAG vs SEM RAG -->
+  <div class="section-title">06 — Com RAG vs. Sem RAG — Impacto Clínico Real</div>
+  <div class="card">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+      <div style="border-radius:12px; border:1px solid #c0392b44; background:#fdf2f0; padding:18px;">
+        <p style="font-size:13px; font-weight:700; color:#922b21; margin-bottom:10px;">❌ Sem RAG (IA genérica)</p>
+        <p style="font-size:13px; color:var(--sub); line-height:1.7;">
+          "Para úlcera venosa, recomenda-se curativo de alginato de cálcio trocado a cada 2 dias..."<br>
+          <span style="color:#c0392b; font-size:12px;">⚠ Pode indicar produto não disponível na rede de Pelotas, frequência errada ou conduta desatualizada</span>
+        </p>
+      </div>
+      <div style="border-radius:12px; border:1px solid #1a7a5e44; background:var(--verde-xlt); padding:18px;">
+        <p style="font-size:13px; font-weight:700; color:#145a41; margin-bottom:10px;">✅ Com RAG (protocolo de Pelotas)</p>
+        <p style="font-size:13px; color:#1c3a2e; line-height:1.7;">
+          "Conforme a padronização SMS-Pelotas, para ferida com exsudato moderado, indicar Biatan Alginato (cód. SUPRI XXXX). Trocar a cada 3 dias ou conforme saturação..."<br>
+          <span style="color:var(--verde); font-size:12px;">✓ Produto real disponível na rede, com código de solicitação e frequência correta</span>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTA FINAL -->
+  <div class="footer-note">
+    <strong>✅ Como funciona na prática:</strong> Cada PDF e documento da base do sistema de Pelotas
+    — Manual SMS-SP (2021), protocolos locais, tabelas SUPRI, fluxogramas de solicitação — é fragmentado
+    em trechos, transformado em vetor pelo modelo de embedding e armazenado no
+    <strong>Chroma DB</strong> (servidor local da SMS Pelotas). Ao receber uma pergunta, o sistema localiza
+    os trechos mais relevantes por <strong>similaridade de cosseno</strong> e os entrega ao LLM para gerar
+    uma resposta clínica precisa, fundamentada e rastreável.<br><br>
+    <strong>🐍 Stack Python deste sistema:</strong>
+    Embeddings → <code>sentence-transformers</code> ou <code>OpenAI text-embedding-3-small</code> &nbsp;|&nbsp;
+    Geração → <code>LLM local / API</code> &nbsp;|&nbsp;
+    Vector Store → <code>chromadb</code> &nbsp;|&nbsp;
+    Orquestração → <code>LangChain</code><br><br>
+    Sistema desenvolvido no contexto do Programa de <strong>Telemonitoramento de Feridas Crônicas</strong> —
+    Secretaria Municipal de Saúde de Pelotas/RS &nbsp;·&nbsp;
+    Base técnica: <strong>Manual de Padronização de Curativos, SMS São Paulo, Janeiro/2021</strong>.
+  </div>
+
+</div>
+</body>
+</html>
