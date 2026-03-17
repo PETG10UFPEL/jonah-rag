@@ -38,7 +38,7 @@ DB_DIR = "/tmp/chroma_db" if _on_cloud else str(DATA_DIR / "chroma_db")
 COLLECTION_NAME = os.getenv("COLLECTION_NAME", "diet_knowledge")
 EMBED_MODEL = os.getenv("EMBED_MODEL", "paraphrase-multilingual-mpnet-base-v2")
 
-st.set_page_config(page_title="Ensina Feridas – RAG Groq", layout="wide")
+st.set_page_config(page_title="Guia PMP- Amor a Pele", layout="wide")
 
 st.markdown("""
 <style>
