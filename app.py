@@ -33,7 +33,7 @@ DB_DIR = str(DATA_DIR / "chroma_db")
 COLLECTION_NAME = os.getenv("COLLECTION_NAME", "diet_knowledge")
 EMBED_MODEL = os.getenv("EMBED_MODEL", "paraphrase-multilingual-mpnet-base-v2")
 
-st.set_page_config(page_title="Guia PMP", layout="wide")
+st.set_page_config(page_title="Ensina Feridas – RAG Groq", layout="wide")
 
 st.markdown("""
 <style>
@@ -171,6 +171,102 @@ def load_vectordb_if_needed() -> bool:
         return False
 
 
+
+
+def build_augmented_query(user_text: str, mode: str, temperature: float) -> str:
+    if temperature <= 0.25:
+        style = "resposta mais objetiva, curta, organizada e direta"
+    elif temperature <= 0.55:
+        style = "resposta equilibrada, clara, didática e prática"
+    else:
+        style = "resposta mais explicativa, com mais contexto, exemplos e detalhamento"
+
+    if mode == "Ensino (tutor)":
+        mode_block = """
+MODO: ENSINO (TUTOR)
+Objetivo:
+- Ensinar do básico ao clínico.
+- Explicar o raciocínio passo a passo.
+- Quando faltarem dados, apontar claramente o que ainda precisa saber.
+Formato desejado:
+1. Resposta curta inicial.
+2. Explicação em passos.
+3. Perguntas diagnósticas objetivas, se faltarem dados.
+4. Mini-roteiro de estudo ou revisão.
+5. Quando fizer sentido, exercício curto com gabarito comentado.
+"""
+    else:
+        mode_block = """
+MODO: CLÍNICO (OBJETIVO)
+Objetivo:
+- Responder de forma prática, segura e direta.
+- Priorizar condutas, avaliação, sinais de alarme, critérios e próximos passos.
+Formato desejado:
+1. Resposta objetiva.
+2. Checklist ou tópicos curtos.
+3. Alertas e encaminhamento presencial quando necessário.
+"""
+    return f"""{mode_block}
+
+ESTILO DA RESPOSTA:
+- Adote {style}.
+- Use prioritariamente os documentos recuperados.
+- Se precisar complementar com conhecimento geral, deixe isso explícito.
+- Não invente fonte.
+- Quando citar base documental, mencione os documentos usados.
+
+DÚVIDA / CONSULTA DO USUÁRIO:
+{user_text}
+""".strip()
+
+
+def decide_sketch_with_groq(question: str, response_text: str, mode: str) -> dict:
+    try:
+        from langchain_groq import ChatGroq
+        groq_key = os.getenv("GROQ_API_KEY", "")
+        if not groq_key:
+            return {"need_sketch": False, "reason": "GROQ_API_KEY ausente.", "sketch_prompt": ""}
+        llm = ChatGroq(
+            model=os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
+            groq_api_key=groq_key,
+            temperature=0.1,
+        )
+        prompt = f"""
+Você decide se um ESBOÇO/FIGURA didática ajudaria a compreender a resposta.
+Responda SOMENTE em JSON válido, sem markdown, no formato:
+{{"need_sketch": true/false, "reason": "...", "sketch_prompt": "..."}}
+
+Regras:
+- need_sketch = true quando desenho, fluxograma, anatomia simplificada, comparação visual, posicionamento, classificação, passo-a-passo ou esquema ajudarem muito.
+- need_sketch = false quando a resposta já estiver suficientemente clara em texto.
+- Se need_sketch = false, sketch_prompt deve ser "".
+- Se need_sketch = true, crie um prompt curto, claro, didático e sem conteúdo chocante.
+- Contexto do app: feridas crônicas, atendimento, ensino e consulta clínica.
+- Modo atual: {mode}
+
+PERGUNTA:
+{question}
+
+RESPOSTA:
+{response_text[:2500]}
+"""
+        raw = llm.invoke(prompt).content.strip()
+        import json, re
+        try:
+            data = json.loads(raw)
+        except Exception:
+            m = re.search(r"\{.*\}", raw, flags=re.DOTALL)
+            if not m:
+                return {"need_sketch": False, "reason": "Não foi possível interpretar a decisão.", "sketch_prompt": ""}
+            data = json.loads(m.group(0))
+        return {
+            "need_sketch": bool(data.get("need_sketch", False)),
+            "reason": str(data.get("reason", "")).strip(),
+            "sketch_prompt": str(data.get("sketch_prompt", "")).strip(),
+        }
+    except Exception as e:
+        return {"need_sketch": False, "reason": f"Falha ao decidir esboço: {e}", "sketch_prompt": ""}
+
 banner_b64 = img_b64("banner.png")
 if banner_b64:
     st.markdown(f"""
@@ -271,12 +367,12 @@ with st.sidebar:
     elif status == "no_folder_id":
         st.error("⚠️ GDRIVE_FOLDER_ID não configurado nos secrets.")
     else:
-        st.info("ℹ️ Índice ainda não verificado nesta sessão.")
+        st.caption("Índice ainda não verificado nesta sessão.")
 
     if st.session_state.vectordb_loaded:
         st.success("✅ Vector DB carregado na sessão.")
     else:
-        st.warning("⏳ Vector DB ainda não carregado na sessão.")
+        st.caption("Vector DB ainda não carregado na sessão.")
 
     col_a, col_b = st.columns(2)
     with col_a:
@@ -433,27 +529,46 @@ def mic_component(target_label: str, field_index: int):
     """, height=48, scrolling=False)
 
 
-st.markdown('<p class="field-label">📋 Dados do paciente</p>', unsafe_allow_html=True)
-mic_component("Dados do paciente", 0)
-patient = st.text_area(
-    "Dados do paciente",
-    height=160,
-    placeholder="Cole aqui um resumo estruturado (idade, sexo, comorbidades, alergias, preferências, objetivos, etc.)",
-    label_visibility="collapsed",
-)
 
-st.markdown('<p class="field-label">❓ Pergunta / objetivo</p>', unsafe_allow_html=True)
-mic_component("Pergunta / objetivo", 1)
-q = st.text_area(
-    "Pergunta / objetivo",
-    height=100,
-    placeholder="Ex.: sugerir plano alimentar de 7 dias, calcular necessidades calóricas, ajustar dieta para diabetes tipo 2, etc.",
+col_cfg1, col_cfg2, col_cfg3 = st.columns([1.3, 1.2, 1.2])
+
+with col_cfg1:
+    mode = st.radio("Modo", ["Ensino (tutor)", "Clínico (objetivo)"], horizontal=True)
+
+with col_cfg2:
+    temperature = st.slider(
+        "Estilo da resposta",
+        0.0,
+        1.0,
+        0.25 if mode == "Ensino (tutor)" else 0.20,
+        0.05,
+    )
+    st.caption("Mais baixo = mais direto • Mais alto = mais explicativo")
+
+with col_cfg3:
+    auto_sketch = st.checkbox(
+        "Sugerir esboço quando fizer sentido",
+        value=True,
+        help="Usa o Groq para decidir se um esquema/figura ajudaria e, se sim, gera um prompt.",
+    )
+
+st.markdown('<p class="field-label">❓ Dúvida / consulta</p>', unsafe_allow_html=True)
+mic_component("Dúvida / consulta", 0)
+user_query = st.text_area(
+    "Dúvida / consulta",
+    height=220,
+    placeholder=(
+        "Escreva aqui sua dúvida clínica ou de estudo.\n"
+        "Ex.: Como diferenciar lesão por pressão de úlcera arterial?\n"
+        "Ex.: No pé diabético, quais sinais exigem avaliação presencial urgente?\n"
+        "Ex.: Explique TIME/TIMERS do básico ao uso prático."
+    ),
     label_visibility="collapsed",
 )
 
 col_btn1, col_btn2, _ = st.columns([1, 1, 3])
 with col_btn1:
-    gerar = st.button("🚀 Gerar resposta", type="primary")
+    gerar = st.button("🚀 Tirar dúvida", type="primary")
 with col_btn2:
     if st.button("🗑️ Limpar cache"):
         _load_vectordb_resource.clear()
@@ -462,27 +577,57 @@ with col_btn2:
         st.success("Cache do índice limpo!")
 
 if gerar:
-    if not patient.strip() or not q.strip():
-        st.error("Preencha os dados do paciente e a pergunta.")
+    if not user_query.strip():
+        st.error("Escreva sua dúvida primeiro.")
     else:
         with st.spinner("Buscando nos documentos e gerando resposta..."):
             if st.session_state.vectordb is None:
                 ensure_local_index(force_download=False)
                 load_vectordb_if_needed()
 
-            patient_short = patient[:2000]
-            resp, hits = answer(q, patient_short, k=3, vectordb=st.session_state.vectordb)
+            query_for_rag = build_augmented_query(user_query, mode, temperature)
+            resp, hits = answer(query_for_rag, "Não informado.", k=4, vectordb=st.session_state.vectordb)
 
         col1, col2 = st.columns([2, 1])
         with col1:
             st.markdown("### Resposta")
             st.markdown(resp)
+
+            if auto_sketch:
+                with st.spinner("Avaliando se um esboço ajudaria..."):
+                    sketch = decide_sketch_with_groq(user_query, resp, mode)
+
+                if sketch.get("need_sketch"):
+                    st.markdown("### ✍️ Sugestão de esboço")
+                    if sketch.get("reason"):
+                        st.info(sketch["reason"])
+                    sketch_prompt = (sketch.get("sketch_prompt") or "").strip()
+                    if sketch_prompt:
+                        st.text_area(
+                            "Prompt do esboço (copie e cole no gerador de imagens)",
+                            value=sketch_prompt,
+                            height=180,
+                        )
+                        st.download_button(
+                            "💾 Baixar prompt do esboço (.txt)",
+                            data=sketch_prompt.encode("utf-8"),
+                            file_name="prompt_esboco_feridas.txt",
+                            mime="text/plain; charset=utf-8",
+                        )
+
         with col2:
             st.markdown("### Fontes recuperadas")
             if hits:
+                shown = set()
                 for d in hits:
-                    src = d.metadata.get("source", "arquivo_desconhecido")
+                    src = Path(d.metadata.get("source", "arquivo_desconhecido")).name
                     page = d.metadata.get("page", "trecho")
-                    st.write(f"- {src} | {page}")
+                    key = f"{src}-{page}"
+                    if key in shown:
+                        continue
+                    shown.add(key)
+                    st.write(f"- {src} | p. {page}")
             else:
+                st.info("Nenhuma fonte recuperada.")
+
                 st.info("Nenhuma fonte indexada utilizada — resposta baseada em conhecimento geral.")
