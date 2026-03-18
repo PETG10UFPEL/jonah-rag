@@ -32,10 +32,11 @@ BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 RAW_DOCS_DIR = DATA_DIR / "raw_docs"
 
+# No Streamlit Cloud /mount/src é read-only — usa /tmp que é gravável
 _on_cloud = Path("/mount/src").exists()
 DB_DIR = "/tmp/chroma_db" if _on_cloud else str(DATA_DIR / "chroma_db")
 
-# CORREÇÃO 1: Padronização do nome da coleção
+# CORREÇÃO: Padronização da coleção e do modelo (igual ao rag.py)
 COLLECTION_NAME = os.getenv("COLLECTION_NAME", "wounds_knowledge")
 EMBED_MODEL = os.getenv("EMBED_MODEL", "paraphrase-multilingual-mpnet-base-v2")
 
@@ -305,14 +306,58 @@ st.markdown(f"""
 
 st.markdown("""
 <p class="info-text" style="margin-bottom:0.8rem;">
-  Sistema de apoio ao <strong>Guia de Feridas Crônicas</strong> da Prefeitura Municipal de Pelotas.
+  Sistema de apoio ao <strong>Guia de Feridas Crônicas</strong> da Prefeitura Municipal de Pelotas,
+  desenvolvido em parceria entre a Secretaria Municipal de Saúde e os projetos
+  <strong>Amor à Pele</strong> e
+  <a href="https://www.instagram.com/g10petsaude/" target="_blank">PET UFPel Saúde Digital</a> &mdash;
+  Telemonitoramento de Feridas Crônicas, coordenados pela professora <a href="https://institucional.ufpel.edu.br/servidores/id/2858" target="_blank">Adrize Rutz Porto</a>,
+  da Faculdade de Enfermagem &ndash; UFPel.
+</p>
+""", unsafe_allow_html=True)
+
+
+def _html_com_imagens_embutidas(html_path: Path) -> str:
+    import re
+    html = html_path.read_text(encoding="utf-8", errors="replace")
+    assets_dir = html_path.parent
+
+    def substituir(match):
+        src = match.group(1)
+        if src.startswith("http"):
+            return match.group(0)
+        img_path = assets_dir / src
+        if img_path.exists():
+            mime = "image/png" if src.lower().endswith(".png") else "image/jpeg"
+            b64 = base64.b64encode(img_path.read_bytes()).decode()
+            return f'src="data:{mime};base64,{b64}"'
+        return match.group(0)
+
+    return re.sub(r'src="([^"]+)"', substituir, html)
+
+
+st.markdown("""
+<p class="info-text" style="margin-top:0.8rem;">
+  <strong>Retrieval-Augmented Generation (RAG-AI)</strong> melhora a precisão dos modelos de linguagem (LLMs)
+  ao recuperar dados externos, como documentos e bases de dados, para responder perguntas,
+  reduzindo as chamadas alucinações.
+</p>
+<p class="info-text" style="margin-top:0.2rem;">
+  <strong>Embeddings</strong> são representações numéricas (vetores) de textos que capturam seu significado
+  semântico, permitindo que a IA encontre informações relevantes por similaridade de sentido,
+  e não apenas por palavras-chave.
+</p>
+<p class="info-text" style="margin-top:0.2rem;">
+  Quer visualizar a representação gráfica do conhecimento?
 </p>
 """, unsafe_allow_html=True)
 
 _emb_path = BASE_DIR / "assets" / "embeddings_guia.html"
 if _emb_path.exists():
     with st.expander("📊 Ver Embeddings da Base de Conhecimento", expanded=False):
-        pass
+        _html_content = _html_com_imagens_embutidas(_emb_path)
+        components.html(_html_content, height=700, scrolling=True)
+else:
+    st.caption("_(arquivo embeddings_guia.html não encontrado em assets/)_")
 
 st.divider()
 
@@ -329,6 +374,11 @@ with st.sidebar:
     else:
         st.caption("Índice ainda não verificado nesta sessão.")
 
+    if st.session_state.vectordb_loaded:
+        st.success("✅ Vector DB carregado na sessão.")
+    else:
+        st.caption("Vector DB ainda não carregado na sessão.")
+
     col_a, col_b = st.columns(2)
     with col_a:
         if st.button("Verificar/restaurar índice"):
@@ -344,6 +394,18 @@ with st.sidebar:
                     st.success("Índice carregado na sessão.")
                 else:
                     st.error("Não foi possível carregar o índice.")
+
+    if os.getenv("DEBUG_APP", "0") == "1":
+        st.caption(f"DB_DIR: {DB_DIR}")
+        st.caption(f"RAW_DOCS_DIR: {RAW_DOCS_DIR}")
+        st.caption(f"EMBED_MODEL: {EMBED_MODEL}")
+
+    with st.expander("Logs da sessão", expanded=False):
+        if st.session_state.load_log:
+            for line in st.session_state.load_log[-20:]:
+                st.code(line)
+        else:
+            st.caption("Sem logs ainda.")
 
     admin_pass = st.text_input("Senha admin", type="password")
     admin_password = secret_get("ADMIN_PASSWORD", "")
@@ -362,13 +424,12 @@ with st.sidebar:
             with st.spinner("Indexando e salvando no Drive..."):
                 t0 = time.perf_counter()
                 
-                # CORREÇÃO 2: Limpando a base atual da memória ANTES de recriar
-                # Isso impede o bloqueio do SQLite na hora de gerar o ZIP
+                # CORREÇÃO: Força a liberação da memória do banco para evitar file lock do SQLite
                 _load_vectordb_resource.clear()
                 st.session_state.vectordb = None
                 st.session_state.vectordb_loaded = False
                 
-                # CORREÇÃO 3: Recuperando o terceiro valor (upload_ok) do ingest
+                # CORREÇÃO: Desempacotando também a flag 'upload_ok'
                 n, vectordb, upload_ok = build_index(
                     str(RAW_DOCS_DIR),
                     DB_DIR,
@@ -381,17 +442,16 @@ with st.sidebar:
                     st.session_state.vectordb_loaded = True
                     st.session_state.restore_status = "local"
                     _log(f"Índice recriado em {dt:.1f}s com {n} trechos.")
-                    
                     db_check = Path(DB_DIR)
                     db_files = list(db_check.rglob("*")) if db_check.exists() else []
                     db_total = sum(f.stat().st_size for f in db_files if f.is_file())
                     st.info(f"🔍 DB_DIR={DB_DIR} | arquivos={len(db_files)} | tamanho={db_total//1024}KB")
                     
-                    # CORREÇÃO 4: Feedback preciso e condicional sobre o Drive
+                    # CORREÇÃO: Feedback real se o Drive aceitou o arquivo ou não
                     if upload_ok:
-                        st.success(f"✅ Índice criado ({n} trechos) e SALVO no Google Drive.")
+                        st.success(f"✅ Índice criado com {n} trechos e SALVO no Drive.")
                     else:
-                        st.warning(f"⚠️ Índice criado ({n} trechos) localmente, mas FALHOU ao salvar no Drive. O Service Account tem permissão de 'Editor' na pasta?")
+                        st.warning(f"⚠️ Índice criado ({n} trechos) localmente, mas FALHOU ao salvar no Drive. Verifique as permissões de Editor do Service Account na pasta.")
                 else:
                     _log("Nenhum documento encontrado para indexação.")
                     st.error(f"Nenhum documento encontrado em {RAW_DOCS_DIR}. Sincronize primeiro.")
@@ -406,7 +466,89 @@ with st.sidebar:
 
 
 def mic_component(target_label: str, field_index: int):
-    pass # mantido minimizado na visualização por praticidade, use o seu código original aqui
+    key = f"mic_{field_index}"
+    components.html(f"""
+    <style>
+      .mic-row {{ display:flex; align-items:center; gap:10px; margin-bottom:2px; }}
+      .mic-btn {{
+        background:#0066cc; color:white; border:none;
+        width:36px; height:36px; border-radius:50%;
+        font-size:1.1rem; cursor:pointer; flex-shrink:0;
+        display:flex; align-items:center; justify-content:center;
+        transition:background .2s;
+      }}
+      .mic-btn.listening {{ background:#e53935; animation:pulse 1s infinite; }}
+      @keyframes pulse {{
+        0%,100%{{box-shadow:0 0 0 0 rgba(229,57,53,.35);}}
+        50%{{box-shadow:0 0 0 8px rgba(229,57,53,0);}}
+      }}
+      #micStatus_{key} {{ font-size:.80rem; color:#555; }}
+    </style>
+    <div class="mic-row">
+      <button class="mic-btn" id="micBtn_{key}" title="Falar">🎤</button>
+      <span id="micStatus_{key}">Toque em 🎤 para falar (Chrome/Edge)</span>
+    </div>
+    <script>
+    (function(){{
+      const btn    = document.getElementById('micBtn_{key}');
+      const status = document.getElementById('micStatus_{key}');
+      let listening = false;
+
+      function fillTextarea(text) {{
+        try {{
+          const doc = window.parent.document;
+          const allTa = doc.querySelectorAll('[data-testid="stTextArea"] textarea');
+          const ta = allTa[{field_index}] || doc.querySelector('textarea[aria-label="{target_label}"]');
+          if (!ta) {{ status.textContent = '⚠️ Campo não encontrado.'; return; }}
+          const setter = Object.getOwnPropertyDescriptor(window.parent.HTMLTextAreaElement.prototype, 'value').set;
+          setter.call(ta, text);
+          ta.dispatchEvent(new Event('input', {{ bubbles: true }}));
+          ta.dispatchEvent(new Event('change', {{ bubbles: true }}));
+          ta.focus();
+          status.textContent = '✅ Texto inserido — edite se quiser.';
+        }} catch(e) {{
+          status.textContent = '⚠️ Erro: ' + e.message;
+        }}
+      }}
+
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) {{
+        status.textContent = '⚠️ Voz indisponível — use Chrome ou Edge.';
+        btn.style.opacity = '.4';
+        return;
+      }}
+      const rec = new SR();
+      rec.lang = 'pt-BR';
+      rec.continuous = false;
+      rec.interimResults = true;
+
+      rec.onstart = () => {{
+        listening = true;
+        btn.classList.add('listening');
+        btn.innerHTML = '🔴';
+        status.textContent = '🎙️ Ouvindo…';
+      }};
+      rec.onresult = (e) => {{
+        let interim = '', final = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {{
+          const t = e.results[i][0].transcript;
+          if (e.results[i].isFinal) final += t; else interim += t;
+        }}
+        if (final) fillTextarea(final.trim());
+        else status.textContent = '…' + interim;
+      }};
+      rec.onerror = (e) => {{
+        status.textContent = '❌ Erro: ' + e.error;
+        btn.classList.remove('listening'); btn.innerHTML = '🎤'; listening = false;
+      }};
+      rec.onend = () => {{
+        listening = false; btn.classList.remove('listening'); btn.innerHTML = '🎤';
+      }};
+      btn.addEventListener('click', () => {{ if (listening) rec.stop(); else rec.start(); }});
+    }})();
+    </script>
+    """, height=48, scrolling=False)
+
 
 
 col_cfg1, col_cfg2, col_cfg3 = st.columns([1.3, 1.2, 1.2])
@@ -422,17 +564,26 @@ with col_cfg2:
         0.25 if mode == "Ensino (tutor)" else 0.20,
         0.05,
     )
+    st.caption("Mais baixo = mais direto • Mais alto = mais explicativo")
 
 with col_cfg3:
     auto_sketch = st.checkbox(
         "Sugerir esboço quando fizer sentido",
         value=True,
+        help="Usa o Groq para decidir se um esquema/figura ajudaria e, se sim, gera um prompt.",
     )
 
 st.markdown('<p class="field-label">❓ Dúvida / consulta</p>', unsafe_allow_html=True)
+mic_component("Dúvida / consulta", 0)
 user_query = st.text_area(
     "Dúvida / consulta",
     height=220,
+    placeholder=(
+        "Escreva aqui sua dúvida clínica ou de estudo.\n"
+        "Ex.: Como diferenciar lesão por pressão de úlcera arterial?\n"
+        "Ex.: No pé diabético, quais sinais exigem avaliação presencial urgente?\n"
+        "Ex.: Explique TIME/TIMERS do básico ao uso prático."
+    ),
     label_visibility="collapsed",
 )
 
@@ -463,6 +614,28 @@ if gerar:
             st.markdown("### Resposta")
             st.markdown(resp)
 
+            if auto_sketch:
+                with st.spinner("Avaliando se um esboço ajudaria..."):
+                    sketch = decide_sketch_with_groq(user_query, resp, mode)
+
+                if sketch.get("need_sketch"):
+                    st.markdown("### ✍️ Sugestão de esboço")
+                    if sketch.get("reason"):
+                        st.info(sketch["reason"])
+                    sketch_prompt = (sketch.get("sketch_prompt") or "").strip()
+                    if sketch_prompt:
+                        st.text_area(
+                            "Prompt do esboço (copie e cole no gerador de imagens)",
+                            value=sketch_prompt,
+                            height=180,
+                        )
+                        st.download_button(
+                            "💾 Baixar prompt do esboço (.txt)",
+                            data=sketch_prompt.encode("utf-8"),
+                            file_name="prompt_esboco_feridas.txt",
+                            mime="text/plain; charset=utf-8",
+                        )
+
         with col2:
             st.markdown("### Fontes recuperadas")
             if hits:
@@ -476,4 +649,5 @@ if gerar:
                     shown.add(key)
                     st.write(f"- {src} | p. {page}")
             else:
-                st.info("Nenhuma fonte indexada utilizada.")
+                st.info("Nenhuma fonte recuperada.")
+                st.info("Nenhuma fonte indexada utilizada — resposta baseada em conhecimento geral.")

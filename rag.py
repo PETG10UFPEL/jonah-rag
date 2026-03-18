@@ -3,6 +3,12 @@ Módulo de Recuperação e Resposta (RAG) para o projeto PET-Saúde G10.
 Focado em feridas crônicas: consulta, estudo e apoio à decisão com base em
 documentos indexados (guias, protocolos e casos), com complemento explícito
 de conhecimento geral quando necessário.
+
+Versão ajustada:
+- remove referências a dieta/nutrição;
+- mantém imports pesados sob demanda;
+- prioriza documentos indexados;
+- usa Groq para gerar respostas em português.
 """
 
 from __future__ import annotations
@@ -37,7 +43,7 @@ COLLECTION_NAME = os.getenv("COLLECTION_NAME", "wounds_knowledge")
 RELEVANCE_THRESHOLD = float(os.getenv("RELEVANCE_THRESHOLD", "0.4"))
 EMBED_MODEL = os.getenv(
     "EMBED_MODEL",
-    "paraphrase-multilingual-mpnet-base-v2", # Alterado de MiniLM para mpnet-base
+    "paraphrase-multilingual-mpnet-base-v2", # Ajustado para bater com ingest.py e app.py
 )
 
 SYSTEM_RULES = """Você é um assistente clínico-educacional do projeto PET-Saúde G10,
@@ -98,7 +104,19 @@ def answer(
     k: int = 5,
     vectordb: Optional[Any] = None,
 ) -> Tuple[str, List[Any]]:
-    
+    """
+    Busca nos documentos e gera resposta híbrida via Groq.
+
+    Parâmetros:
+      question       – dúvida/consulta do usuário
+      patient_summary – resumo opcional (mantido por compatibilidade)
+      k              – número de documentos/trechos recuperados
+      vectordb       – instância Chroma já criada (session_state). Se None,
+                       tenta carregar do disco.
+
+    Retorna:
+      (texto_da_resposta, lista_de_documentos_encontrados)
+    """
     groq_key = os.getenv("GROQ_API_KEY")
     if not groq_key:
         raise RuntimeError(

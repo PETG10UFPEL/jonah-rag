@@ -22,7 +22,7 @@ _on_cloud = Path("/mount/src").exists()
 RAW_DIR_DEFAULT = str(BASE_DIR / "data" / "raw_docs")
 DB_DIR_DEFAULT  = "/tmp/chroma_db" if _on_cloud else str(BASE_DIR / "data" / "chroma_db")
 
-# CORREÇÃO 1: Padronização do nome da coleção
+# CORREÇÃO: Padronização do nome da coleção
 COLLECTION_NAME = os.getenv("COLLECTION_NAME", "wounds_knowledge")
 
 # Modelo multilíngue — roda local, sem API key, sem limite de cota
@@ -166,16 +166,21 @@ def build_index(
     clear_existing: bool = True,
 ) -> Tuple[int, Optional[Any], bool]:
     """
-    Indexa os documentos localmente com HuggingFace.
-    Retorna: (número_de_chunks, vectordb, status_de_upload_do_drive)
+    Indexa os documentos localmente com HuggingFace (sem API paga, sem cota).
+    Suporta documentos em português, inglês e outras línguas simultaneamente.
+    Corrige automaticamente problemas de encoding em documentos PT-BR.
+
+    gdrive_folder_id — se informado, faz upload do índice ao Drive após criar,
+                       permitindo recuperar após sleep do Streamlit.
     """
+    # Garante sempre /tmp/chroma_db na nuvem independente do parametro recebido
     if Path("/mount/src").exists():
         db_dir = "/tmp/chroma_db"
 
     raw_path = Path(raw_dir)
     db_path = Path(db_dir)
     raw_path.mkdir(parents=True, exist_ok=True)
-    db_path.mkdir(parents=True, exist_ok=True) 
+    db_path.mkdir(parents=True, exist_ok=True)  # garante que a pasta existe antes do Chroma
 
     docs, skipped = load_all_docs(str(raw_path))
     if not docs:
@@ -190,6 +195,7 @@ def build_index(
     )
     chunks = splitter.split_documents(docs)
 
+    # Limpa sempre para evitar DB corrompido entre sessoes
     if db_path.exists():
         shutil.rmtree(db_path, ignore_errors=True)
     db_path.mkdir(parents=True, exist_ok=True)
@@ -216,7 +222,6 @@ def build_index(
 
     print(f"Sucesso! {len(chunks)} trechos indexados.")
 
-    # CORREÇÃO 2: Captura real do status de upload
     upload_ok = False
     if gdrive_folder_id:
         print("[Drive] Salvando índice no Google Drive...")
@@ -229,6 +234,7 @@ def build_index(
         else:
             try:
                 from drive_sync import upload_index_to_drive
+                # CORREÇÃO: Capturando o status real do envio para o Drive
                 upload_ok = upload_index_to_drive(db_dir, gdrive_folder_id)
                 if upload_ok:
                     print("[Drive] Índice salvo com sucesso.")
