@@ -3,24 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Embeddings — Guia de Feridas Crônicas · Pelotas</title>
+<title>Embeddings — Guia de Feridas Crônicas · Pelotas | Identidade Institucional</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&family=DM+Mono:wght@400;500&family=Playfair+Display:wght@700;900&display=swap');
 
   :root {
-    --verde:    #1a7a5e;
-    --verde-md: #25a07a;
-    --verde-lt: #d0f0e8;
-    --verde-xlt:#edfaf5;
-    --azul:     #1b4f72;
-    --azul-lt:  #d6e8f7;
-    --vermelho: #c0392b;
-    --amarelo:  #e67e22;
-    --cinza:    #f4f6f8;
-    --borda:    #d5dfe8;
-    --texto:    #1c2b3a;
-    --sub:      #4f6470;
-    --bg:       #f2f5f7;
+    --vermelho:  #ef4b4c;
+    --laranja:   #f5a623;
+    --azul:      #5aa9f8;
+    --azul-md:   #3b82f6;
+    --vermelho-lt:#ffe8e8;
+    --laranja-lt:#fff3df;
+    --azul-lt:   #e8f3ff;
+    --azul-xlt:  #f4f9ff;
+    --cinza:     #f6f8fb;
+    --borda:     #d9e3ef;
+    --texto:     #17324d;
+    --sub:       #4f6470;
+    --bg:        linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
+    --sombra:    0 8px 24px rgba(24, 52, 88, 0.08);
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -40,7 +41,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: var(--verde);
+    background: var(--vermelho);
     border-radius: 14px;
     padding: 16px 24px;
     margin-bottom: 28px;
@@ -82,7 +83,7 @@
   }
   .header .tag {
     display: inline-block;
-    background: linear-gradient(135deg, var(--verde), var(--verde-md));
+    background: linear-gradient(135deg, var(--vermelho), var(--laranja));
     color: white;
     font-size: 11px;
     font-weight: 700;
@@ -100,18 +101,18 @@
     color: var(--azul);
   }
   .header h1 span {
-    color: var(--verde);
+    color: var(--laranja);
   }
   .header p { color: var(--sub); font-size: 15px; margin-top: 10px; line-height: 1.6; }
   .header .ref-manual {
     display: inline-block;
     margin-top: 12px;
-    background: var(--verde-xlt);
+    background: var(--azul-xlt);
     border: 1px solid #9ddcca;
     border-radius: 10px;
     padding: 8px 16px;
     font-size: 12px;
-    color: var(--verde);
+    color: var(--vermelho);
     font-weight: 600;
   }
 
@@ -121,7 +122,7 @@
     font-weight: 700;
     letter-spacing: 2px;
     text-transform: uppercase;
-    color: var(--verde);
+    color: var(--vermelho);
     margin-bottom: 14px;
     display: flex;
     align-items: center;
@@ -162,7 +163,7 @@
   .analogy-side .emoji { font-size: 30px; margin-bottom: 8px; }
   .analogy-side .label { font-size: 12px; color: var(--sub); margin-bottom: 4px; }
   .analogy-side .value { font-size: 13px; font-weight: 600; color: var(--texto); }
-  .arrow-mid { text-align: center; font-size: 26px; color: var(--verde); }
+  .arrow-mid { text-align: center; font-size: 26px; color: var(--vermelho); }
 
   /* ─── WORD VECTORS ─── */
   .word-row { display: flex; align-items: center; gap: 7px; margin: 8px 0; }
@@ -179,7 +180,7 @@
     text-align: center;
   }
   .vec-cell.neg { color: var(--vermelho); }
-  .vec-cell.hi  { border-color: var(--verde); background: var(--verde-lt); color: var(--verde); font-weight: 700; }
+  .vec-cell.hi  { border-color: var(--vermelho); background: var(--laranja-lt); color: var(--vermelho); font-weight: 700; }
   .dim-label { font-size: 10px; color: var(--sub); text-align: center; min-width: 50px; }
 
   /* ─── PIPELINE ─── */
@@ -202,14 +203,14 @@
     top: 50%;
     transform: translateY(-50%);
     font-size: 17px;
-    color: var(--verde);
+    color: var(--vermelho);
     z-index: 2;
   }
   .pipe-step:last-child::after { display: none; }
   .pipe-icon { font-size: 26px; margin-bottom: 8px; }
   .pipe-title { font-size: 11px; font-weight: 700; color: var(--texto); margin-bottom: 4px; }
   .pipe-desc { font-size: 10px; color: var(--sub); line-height: 1.4; }
-  .pipe-step.hl { background: var(--azul); border-color: var(--verde-md); }
+  .pipe-step.hl { background: var(--azul); border-color: var(--laranja); }
   .pipe-step.hl .pipe-title { color: #a8dfce; }
   .pipe-step.hl .pipe-desc { color: #78c4a8; }
 
@@ -227,7 +228,7 @@
   .rag-num {
     width: 32px; height: 32px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--verde), var(--verde-md));
+    background: linear-gradient(135deg, var(--vermelho), var(--laranja));
     display: flex; align-items: center; justify-content: center;
     font-weight: 900; font-size: 14px; flex-shrink: 0; color: white;
   }
@@ -296,12 +297,12 @@
 
   /* ─── FONTE REF ─── */
   .fonte-ref {
-    background: var(--verde-xlt);
+    background: var(--azul-xlt);
     border: 1px solid #9ddcca;
     border-radius: 10px;
     padding: 12px 16px;
     font-size: 12px;
-    color: var(--verde);
+    color: var(--vermelho);
     margin-top: 14px;
     line-height: 1.6;
   }
@@ -309,7 +310,7 @@
 
   /* ─── FOOTER ─── */
   .footer-note {
-    background: linear-gradient(135deg, var(--verde-xlt), #ffffff);
+    background: linear-gradient(135deg, var(--azul-xlt), #ffffff);
     border: 1px solid #9ddcca;
     border-radius: 14px;
     padding: 20px 26px;
@@ -318,7 +319,7 @@
     color: var(--sub);
     line-height: 1.75;
   }
-  .footer-note strong { color: var(--verde); }
+  .footer-note strong { color: var(--vermelho); }
   .footer-note code {
     background: var(--cinza);
     border: 1px solid var(--borda);
@@ -327,6 +328,96 @@
     font-family: 'DM Mono', monospace;
     font-size: 11px;
     color: var(--azul);
+  }
+
+  
+  .topo-inst {
+    background: linear-gradient(135deg, var(--vermelho) 0%, var(--laranja) 52%, var(--azul) 100%);
+    box-shadow: var(--sombra);
+  }
+  .topo-inst .inst-sub { color: rgba(255,255,255,0.88); }
+  .topo-inst .inst-badge {
+    background: rgba(255,255,255,0.18);
+    border-color: rgba(255,255,255,0.35);
+    color: #fff;
+  }
+  .header {
+    background: #ffffff;
+    border: 1px solid var(--borda);
+    border-radius: 22px;
+    box-shadow: var(--sombra);
+    padding: 26px 26px 30px;
+  }
+  .brand-strip {
+    display:grid;
+    grid-template-columns: repeat(3, minmax(110px, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .brand-chip {
+    border-radius: 16px;
+    padding: 14px 12px;
+    color: #fff;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 12px;
+    min-height: 76px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    line-height: 1.35;
+  }
+  .brand-chip.red { background: var(--vermelho); }
+  .brand-chip.orange { background: var(--laranja); color:#17324d; }
+  .brand-chip.blue { background: var(--azul-md); }
+  .amorapeli-wrap {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap: 22px;
+    margin: 6px 0 16px;
+    flex-wrap: wrap;
+  }
+  .amorapeli-wrap img {
+    width: min(100%, 240px);
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 8px 16px rgba(24,52,88,.10));
+  }
+  .hero-seal {
+    background: linear-gradient(135deg, var(--vermelho-lt), var(--azul-lt));
+    border: 1px solid var(--borda);
+    border-radius: 16px;
+    padding: 14px 16px;
+    max-width: 370px;
+    text-align: left;
+  }
+  .hero-seal strong {
+    display:block;
+    color: var(--texto);
+    margin-bottom: 4px;
+    font-size: 14px;
+  }
+  .hero-seal span {
+    font-size: 12px;
+    color: var(--sub);
+    line-height:1.5;
+    display:block;
+  }
+  .section-title {
+    color: var(--vermelho);
+  }
+  .card {
+    box-shadow: var(--sombra);
+  }
+  .highlight-box {
+    background: linear-gradient(135deg, #214f86, var(--azul-md));
+  }
+  .footer-note {
+    background: linear-gradient(135deg, var(--azul-xlt), #ffffff);
+    border-color: #cfe1f5;
   }
 
   @media (max-width: 600px) {
@@ -339,6 +430,8 @@
     .scatter-legend { width: 100%; }
     .header h1    { font-size: 26px; }
     .topo-inst    { flex-direction: column; text-align: center; }
+    .brand-strip { grid-template-columns: 1fr; }
+    .hero-seal { text-align: center; }
   }
 </style>
 </head>
@@ -347,17 +440,29 @@
 
   <!-- TOPO INSTITUCIONAL -->
   <div class="topo-inst">
-    <div class="brasao">🏛️</div>
+    <div class="brasao">🏥</div>
     <div class="inst-text">
       <div class="inst-nome">Prefeitura Municipal de Pelotas<br>Secretaria Municipal de Saúde</div>
-      <div class="inst-sub">Programa de Telemonitoramento de Feridas Crônicas</div>
+      <div class="inst-sub">Telemonitoramento de Feridas Crônicas · Amor-à-Pele</div>
     </div>
-    <div class="inst-badge">🐍 Sistema Python · RAG-AI</div>
+    <div class="inst-badge">Identidade institucional</div>
   </div>
 
   <!-- HEADER -->
   <div class="header">
+    <div class="brand-strip">
+      <div class="brand-chip red">Portal<br>Educação</div>
+      <div class="brand-chip orange">Portal<br>Cultura</div>
+      <div class="brand-chip blue">Portal<br>Saúde</div>
+    </div>
     <div class="tag">🩹 Guia Técnico-Educativo — RAG-AI</div>
+    <div class="amorapeli-wrap">
+      <img src="amorapeli_logo.png" alt="Logo Amor-à-Pele">
+      <div class="hero-seal">
+        <strong>Identidade visual integrada</strong>
+        <span>Versão com base cromática institucional em vermelho, laranja e azul claro, alinhada à comunicação pública local e ao projeto Amor-à-Pele.</span>
+      </div>
+    </div>
     <h1>Embeddings no <span>Guia de Feridas</span><br>de Pelotas</h1>
     <p>Como o sistema Python entende o protocolo municipal e responde com precisão clínica<br>para profissionais e agentes de saúde da rede pública</p>
     <div class="ref-manual">📄 Base de conhecimento: Manual de Padronização de Curativos (SMS-SP, 2021) + protocolos locais</div>
@@ -367,7 +472,7 @@
   <div class="section-title">01 — O que é um Embedding?</div>
   <div class="card">
     <p style="color:var(--sub); font-size:14px; line-height:1.75; margin-bottom:18px;">
-      Um <strong style="color:var(--verde)">embedding</strong> transforma palavras, frases ou documentos inteiros em uma lista de números (vetor).
+      Um <strong style="color:var(--vermelho)">embedding</strong> transforma palavras, frases ou documentos inteiros em uma lista de números (vetor).
       Esses números <em>capturam o significado semântico</em> — conceitos relacionados ficam matematicamente próximos,
       mesmo que as palavras sejam diferentes. É assim que o sistema Python de Pelotas <em>lê</em> o protocolo de curativos
       e entende perguntas clínicas sem precisar de palavras exatas.
@@ -383,7 +488,7 @@
       <div class="analogy-side">
         <div class="emoji">🔢</div>
         <div class="label">Embedding (simplificado)</div>
-        <div class="value" style="font-family:'DM Mono',monospace; color:var(--verde); font-size:12px;">[0.8, −0.2, 0.9, 0.6, −0.1, 0.7, ...]</div>
+        <div class="value" style="font-family:'DM Mono',monospace; color:var(--vermelho); font-size:12px;">[0.8, −0.2, 0.9, 0.6, −0.1, 0.7, ...]</div>
       </div>
     </div>
 
@@ -480,7 +585,7 @@
         <div class="legend-item"><div class="legend-dot" style="background:#1b4f72;"></div><span>Curativos padronizados (SMS)</span></div>
         <div class="legend-item"><div class="legend-dot" style="background:#c0392b;"></div><span>Infecção, necrose e desbridamento</span></div>
         <p style="font-size:11px; color:var(--sub); margin-top:10px; line-height:1.5;">
-          A IA aprende que <strong style="color:var(--verde)">Escara</strong> e <strong style="color:var(--verde)">necrose seca</strong>
+          A IA aprende que <strong style="color:var(--vermelho)">Escara</strong> e <strong style="color:var(--vermelho)">necrose seca</strong>
           são o mesmo conceito, mesmo sem ninguém mapear isso explicitamente!
         </p>
       </div>
@@ -597,8 +702,8 @@
       <div class="sim-card">
         <div class="sim-emoji">📄</div>
         <div class="sim-text">Antimicrobianos (prata/PHMB) para feridas infectadas com exsudato intenso — Manual SMS-SP p. 49</div>
-        <div class="sim-bar-bg"><div class="sim-bar" style="width:93%; background:linear-gradient(to right, var(--verde), var(--verde-md));"></div></div>
-        <div class="sim-pct" style="color:var(--verde);">93% similar ✓</div>
+        <div class="sim-bar-bg"><div class="sim-bar" style="width:93%; background:linear-gradient(to right, var(--vermelho), var(--laranja));"></div></div>
+        <div class="sim-pct" style="color:var(--vermelho);">93% similar ✓</div>
       </div>
       <div class="sim-card">
         <div class="sim-emoji">📄</div>
@@ -723,11 +828,11 @@
           <span style="color:#c0392b; font-size:12px;">⚠ Pode indicar produto não disponível na rede de Pelotas, frequência errada ou conduta desatualizada</span>
         </p>
       </div>
-      <div style="border-radius:12px; border:1px solid #1a7a5e44; background:var(--verde-xlt); padding:18px;">
+      <div style="border-radius:12px; border:1px solid #1a7a5e44; background:var(--azul-xlt); padding:18px;">
         <p style="font-size:13px; font-weight:700; color:#145a41; margin-bottom:10px;">✅ Com RAG (protocolo de Pelotas)</p>
         <p style="font-size:13px; color:#1c3a2e; line-height:1.7;">
           "Conforme a padronização SMS-Pelotas, para ferida com exsudato moderado, indicar Biatan Alginato (cód. SUPRI XXXX). Trocar a cada 3 dias ou conforme saturação..."<br>
-          <span style="color:var(--verde); font-size:12px;">✓ Produto real disponível na rede, com código de solicitação e frequência correta</span>
+          <span style="color:var(--vermelho); font-size:12px;">✓ Produto real disponível na rede, com código de solicitação e frequência correta</span>
         </p>
       </div>
     </div>
