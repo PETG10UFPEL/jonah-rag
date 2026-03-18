@@ -193,8 +193,10 @@ def build_index(
     )
     chunks = splitter.split_documents(docs)
 
-    if clear_existing and db_path.exists():
+    # Limpa sempre para evitar DB corrompido entre sessoes
+    if db_path.exists():
         shutil.rmtree(db_path, ignore_errors=True)
+    db_path.mkdir(parents=True, exist_ok=True)
 
     embeddings = _get_embeddings()
 
