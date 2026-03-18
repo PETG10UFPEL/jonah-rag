@@ -216,15 +216,22 @@ def build_index(
 
     if gdrive_folder_id:
         print("[Drive] Salvando índice no Google Drive...")
-        try:
-            from drive_sync import upload_index_to_drive
-            ok = upload_index_to_drive(db_dir, gdrive_folder_id)
-            if ok:
-                print("[Drive] Índice salvo com sucesso.")
-            else:
-                print("[Drive] Falha ao salvar índice (verifique permissões).")
-        except Exception as e:
-            print(f"[Drive] Erro ao salvar índice: {e}")
+        db_path_check = Path(db_dir)
+        files_in_db = list(db_path_check.rglob("*")) if db_path_check.exists() else []
+        total_size = sum(f.stat().st_size for f in files_in_db if f.is_file())
+        print(f"[Drive] db_dir={db_dir} | arquivos={len(files_in_db)} | tamanho={total_size//1024}KB")
+        if total_size < 1024:
+            print(f"[Drive] AVISO: índice parece vazio ou muito pequeno ({total_size} bytes), abortando upload.")
+        else:
+            try:
+                from drive_sync import upload_index_to_drive
+                ok = upload_index_to_drive(db_dir, gdrive_folder_id)
+                if ok:
+                    print("[Drive] Índice salvo com sucesso.")
+                else:
+                    print("[Drive] Falha ao salvar índice (verifique permissões).")
+            except Exception as e:
+                print(f"[Drive] Erro ao salvar índice: {e}")
 
     return len(chunks), vectordb
 
