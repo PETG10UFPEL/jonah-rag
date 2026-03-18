@@ -435,6 +435,10 @@ with st.sidebar:
                     st.session_state.vectordb_loaded = True
                     st.session_state.restore_status = "local"
                     _log(f"Índice recriado em {dt:.1f}s com {n} trechos.")
+                    db_check = Path(DB_DIR)
+                    db_files = list(db_check.rglob("*")) if db_check.exists() else []
+                    db_total = sum(f.stat().st_size for f in db_files if f.is_file())
+                    st.info(f"🔍 DB_DIR={DB_DIR} | arquivos={len(db_files)} | tamanho={db_total//1024}KB")
                     st.success(f"✅ Índice criado com {n} trechos e salvo no Drive.")
                 else:
                     _log("Nenhum documento encontrado para indexação.")
