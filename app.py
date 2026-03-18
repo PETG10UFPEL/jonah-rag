@@ -583,7 +583,7 @@ user_query = st.text_area(
 
 col_btn1, col_btn2, _ = st.columns([1, 1, 3])
 with col_btn1:
-    gerar = st.button("🚀 Tirar dúvida", type="primary")
+    gerar = st.button("🚀 Consulta", type="primary")
 with col_btn2:
     if st.button("🗑️ Limpar cache"):
         _load_vectordb_resource.clear()
