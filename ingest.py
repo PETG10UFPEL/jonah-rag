@@ -174,7 +174,7 @@ def build_index(
     raw_path = Path(raw_dir)
     db_path = Path(db_dir)
     raw_path.mkdir(parents=True, exist_ok=True)
-    db_path.parent.mkdir(parents=True, exist_ok=True)
+    db_path.mkdir(parents=True, exist_ok=True)  # garante que a pasta existe antes do Chroma
 
     docs, skipped = load_all_docs(str(raw_path))
     if not docs:
