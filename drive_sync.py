@@ -165,6 +165,10 @@ def upload_index_to_drive(db_dir: str, gdrive_folder_id: str) -> bool:
     import tempfile
     import zipfile
 
+    # Garante sempre /tmp/chroma_db na nuvem
+    if Path("/mount/src").exists():
+        db_dir = "/tmp/chroma_db"
+
     db_path = Path(db_dir)
     if not db_path.exists():
         print(f'[ERRO] Pasta do índice não existe: {db_path}')
