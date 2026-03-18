@@ -465,28 +465,63 @@ def mic_component(target_label: str, field_index: int):
     <style>
       .mic-row {{ display:flex; align-items:center; gap:10px; margin-bottom:2px; }}
       .mic-btn {{
-        background:#0066cc; color:white; border:none;
-        width:36px; height:36px; border-radius:50%;
-        font-size:1.1rem; cursor:pointer; flex-shrink:0;
-        display:flex; align-items:center; justify-content:center;
-        transition:background .2s;
+        background: linear-gradient(135deg, #0066cc, #0099ff);
+        color: white; border: none;
+        width: 38px; height: 38px; border-radius: 50%;
+        cursor: pointer; flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+        transition: background .2s, box-shadow .2s;
+        box-shadow: 0 2px 6px rgba(0,102,204,0.35);
+        padding: 0;
       }}
-      .mic-btn.listening {{ background:#e53935; animation:pulse 1s infinite; }}
+      .mic-btn:hover {{ box-shadow: 0 3px 10px rgba(0,102,204,0.5); }}
+      .mic-btn.listening {{
+        background: linear-gradient(135deg, #e53935, #ff6b6b);
+        box-shadow: 0 0 0 0 rgba(229,57,53,.35);
+        animation: pulse 1s infinite;
+      }}
       @keyframes pulse {{
         0%,100%{{box-shadow:0 0 0 0 rgba(229,57,53,.35);}}
-        50%{{box-shadow:0 0 0 8px rgba(229,57,53,0);}}
+        50%{{box-shadow:0 0 0 9px rgba(229,57,53,0);}}
       }}
       #micStatus_{key} {{ font-size:.80rem; color:#555; }}
+      .mic-icon {{ width:18px; height:18px; fill:white; display:block; }}
+      .mic-wave {{ width:18px; height:18px; fill:white; display:none; }}
     </style>
     <div class="mic-row">
-      <button class="mic-btn" id="micBtn_{key}" title="Falar">🎤</button>
-      <span id="micStatus_{key}">Toque em 🎤 para falar (Chrome/Edge)</span>
+      <button class="mic-btn" id="micBtn_{key}" title="Falar">
+        <!-- Microfone SVG -->
+        <svg id="iconMic_{key}" class="mic-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm-1.5 4v6a1.5 1.5 0 0 0 3 0V5a1.5 1.5 0 0 0-3 0z"/>
+          <path d="M5 10.5a1 1 0 0 1 2 0 5 5 0 0 0 10 0 1 1 0 1 1 2 0 7 7 0 0 1-6 6.92V20h3a1 1 0 1 1 0 2H8a1 1 0 1 1 0-2h3v-2.58A7 7 0 0 1 5 10.5z"/>
+        </svg>
+        <!-- Onda gravando SVG -->
+        <svg id="iconWave_{key}" class="mic-wave" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="4"/>
+          <circle cx="12" cy="12" r="4" opacity=".4"><animate attributeName="r" from="4" to="11" dur="1s" repeatCount="indefinite"/><animate attributeName="opacity" from=".4" to="0" dur="1s" repeatCount="indefinite"/></circle>
+        </svg>
+      </button>
+      <span id="micStatus_{key}">Clique no microfone para falar (Chrome/Edge)</span>
     </div>
     <script>
     (function(){{
       const btn    = document.getElementById('micBtn_{key}');
       const status = document.getElementById('micStatus_{key}');
+      const iconMic  = document.getElementById('iconMic_{key}');
+      const iconWave = document.getElementById('iconWave_{key}');
       let listening = false;
+
+      function setListening(on) {{
+        if (on) {{
+          btn.classList.add('listening');
+          iconMic.style.display  = 'none';
+          iconWave.style.display = 'block';
+        }} else {{
+          btn.classList.remove('listening');
+          iconMic.style.display  = 'block';
+          iconWave.style.display = 'none';
+        }}
+      }}
 
       function fillTextarea(text) {{
         try {{
@@ -518,8 +553,7 @@ def mic_component(target_label: str, field_index: int):
 
       rec.onstart = () => {{
         listening = true;
-        btn.classList.add('listening');
-        btn.innerHTML = '🔴';
+        setListening(true);
         status.textContent = '🎙️ Ouvindo…';
       }};
       rec.onresult = (e) => {{
@@ -533,10 +567,10 @@ def mic_component(target_label: str, field_index: int):
       }};
       rec.onerror = (e) => {{
         status.textContent = '❌ Erro: ' + e.error;
-        btn.classList.remove('listening'); btn.innerHTML = '🎤'; listening = false;
+        setListening(false); listening = false;
       }};
       rec.onend = () => {{
-        listening = false; btn.classList.remove('listening'); btn.innerHTML = '🎤';
+        listening = false; setListening(false);
       }};
       btn.addEventListener('click', () => {{ if (listening) rec.stop(); else rec.start(); }});
     }})();
@@ -608,6 +642,35 @@ if gerar:
             st.markdown("### Resposta")
             st.markdown(resp)
 
+            # ── Botão copiar resposta ──────────────────────────────────────
+            resp_escaped = resp.replace("\\", "\\\\").replace("`", "\\`").replace("$", "\\$")
+            copy_resp_html = f"""
+            <button onclick="copyResposta(this)"
+                    style="padding:0.4rem 1rem; background-color:#0f4c81;
+                           color:white; border:none; border-radius:0.5rem;
+                           cursor:pointer; font-size:0.88rem; font-weight:500;
+                           margin-bottom:0.5rem;">
+                📋 Copiar resposta
+            </button>
+            <script>
+            function copyResposta(btn) {{
+                const text = `{resp_escaped}`;
+                navigator.clipboard.writeText(text).then(function() {{
+                    const original = btn.innerHTML;
+                    btn.innerHTML = '✅ Copiado!';
+                    btn.style.backgroundColor = '#0e7c0e';
+                    setTimeout(function() {{
+                        btn.innerHTML = original;
+                        btn.style.backgroundColor = '#0f4c81';
+                    }}, 2000);
+                }}, function(err) {{
+                    alert('Erro ao copiar: ' + err);
+                }});
+            }}
+            </script>
+            """
+            components.html(copy_resp_html, height=46)
+
             if auto_sketch:
                 with st.spinner("Avaliando se um esboço ajudaria..."):
                     sketch = decide_sketch_with_groq(user_query, resp, mode)
@@ -634,19 +697,20 @@ if gerar:
                             )
                         
                         with col_copy_sketch:
+                            # FIX: usa template literal JS diretamente — sem <textarea> auxiliar,
+                            # que disparava eventos input/change no Streamlit e apagava o campo.
+                            sketch_escaped = sketch_prompt.replace("\\", "\\\\").replace("`", "\\`").replace("$", "\\$")
                             copy_sketch_html = f"""
-                            <button onclick="copySketchPrompt()" 
-                                    style="width:100%; padding:0.5rem 1rem; background-color:#1e3a8a; 
-                                           color:white; border:1px solid #2563eb; border-radius:0.5rem; 
+                            <button onclick="copySketchPrompt(this)"
+                                    style="width:100%; padding:0.5rem 1rem; background-color:#1e3a8a;
+                                           color:white; border:1px solid #2563eb; border-radius:0.5rem;
                                            cursor:pointer; font-size:0.9rem; font-weight:500;">
                                 📋 Copiar prompt
                             </button>
-                            <textarea id="sketchTextToCopy" style="position:absolute; left:-9999px;">{sketch_prompt}</textarea>
                             <script>
-                            function copySketchPrompt() {{
-                                const text = document.getElementById('sketchTextToCopy').value;
+                            function copySketchPrompt(btn) {{
+                                const text = `{sketch_escaped}`;
                                 navigator.clipboard.writeText(text).then(function() {{
-                                    const btn = event.target;
                                     const original = btn.innerHTML;
                                     btn.innerHTML = '✅ Copiado!';
                                     btn.style.backgroundColor = '#0e7c0e';
