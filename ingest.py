@@ -171,6 +171,10 @@ def build_index(
     gdrive_folder_id — se informado, faz upload do índice ao Drive após criar,
                        permitindo recuperar após sleep do Streamlit.
     """
+    # Garante sempre /tmp/chroma_db na nuvem independente do parametro recebido
+    if Path("/mount/src").exists():
+        db_dir = "/tmp/chroma_db"
+
     raw_path = Path(raw_dir)
     db_path = Path(db_dir)
     raw_path.mkdir(parents=True, exist_ok=True)
