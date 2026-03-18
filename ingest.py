@@ -202,15 +202,23 @@ def build_index(
 
     embeddings = _get_embeddings()
 
-    print(f"[OK] Gerando embeddings para {len(chunks)} chunks (modelo local)...")
+    print(f"[OK] Gerando embeddings para {len(chunks)} chunks em lotes (modelo local)...")
 
     Chroma = _get_chroma_class()
-    vectordb = Chroma.from_documents(
-        documents=chunks,
-        embedding=embeddings,
+    
+    # 1. Cria a conexão com o banco vazio primeiro
+    vectordb = Chroma(
+        embedding_function=embeddings,
         persist_directory=str(db_path),
         collection_name=COLLECTION_NAME,
     )
+
+    # 2. Processa e insere os documentos em lotes de 100 para evitar estourar a memória (1GB RAM)
+    batch_size = 100
+    for i in range(0, len(chunks), batch_size):
+        lote = chunks[i : i + batch_size]
+        vectordb.add_documents(lote)
+        print(f"[Processando] Lote gravado: {min(i + batch_size, len(chunks))}/{len(chunks)}")
 
     try:
         vectordb.persist()
@@ -234,7 +242,7 @@ def build_index(
         else:
             try:
                 from drive_sync import upload_index_to_drive
-                # CORREÇÃO: Capturando o status real do envio para o Drive
+                # Capturando o status real do envio para o Drive
                 upload_ok = upload_index_to_drive(db_dir, gdrive_folder_id)
                 if upload_ok:
                     print("[Drive] Índice salvo com sucesso.")
