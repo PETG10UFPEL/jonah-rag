@@ -616,19 +616,51 @@ if gerar:
                     st.markdown("### ✍️ Sugestão de esboço")
                     if sketch.get("reason"):
                         st.info(sketch["reason"])
+                    
                     sketch_prompt = (sketch.get("sketch_prompt") or "").strip()
                     if sketch_prompt:
-                        st.text_area(
-                            "Prompt do esboço (copie e cole no gerador de imagens)",
-                            value=sketch_prompt,
-                            height=180,
-                        )
-                        st.download_button(
-                            "💾 Baixar prompt do esboço (.txt)",
-                            data=sketch_prompt.encode("utf-8"),
-                            file_name="prompt_esboco_feridas.txt",
-                            mime="text/plain; charset=utf-8",
-                        )
+                        st.markdown("**Prompt do esboço:**")
+                        st.info(sketch_prompt)
+                        
+                        col_download, col_copy_sketch = st.columns([1, 1])
+                        
+                        with col_download:
+                            st.download_button(
+                                "💾 Baixar prompt (.txt)",
+                                data=sketch_prompt.encode("utf-8"),
+                                file_name="prompt_esboco.txt",
+                                mime="text/plain; charset=utf-8",
+                                use_container_width=True,
+                            )
+                        
+                        with col_copy_sketch:
+                            copy_sketch_html = f"""
+                            <button onclick="copySketchPrompt()" 
+                                    style="width:100%; padding:0.5rem 1rem; background-color:#1e3a8a; 
+                                           color:white; border:1px solid #2563eb; border-radius:0.5rem; 
+                                           cursor:pointer; font-size:0.9rem; font-weight:500;">
+                                📋 Copiar prompt
+                            </button>
+                            <textarea id="sketchTextToCopy" style="position:absolute; left:-9999px;">{sketch_prompt}</textarea>
+                            <script>
+                            function copySketchPrompt() {{
+                                const text = document.getElementById('sketchTextToCopy').value;
+                                navigator.clipboard.writeText(text).then(function() {{
+                                    const btn = event.target;
+                                    const original = btn.innerHTML;
+                                    btn.innerHTML = '✅ Copiado!';
+                                    btn.style.backgroundColor = '#0e7c0e';
+                                    setTimeout(function() {{
+                                        btn.innerHTML = original;
+                                        btn.style.backgroundColor = '#1e3a8a';
+                                    }}, 2000);
+                                }}, function(err) {{
+                                    alert('Erro ao copiar: ' + err);
+                                }});
+                            }}
+                            </script>
+                            """
+                            components.html(copy_sketch_html, height=50)
 
         with col2:
             st.markdown("### Fontes recuperadas")
