@@ -308,9 +308,7 @@ st.markdown("""
 <p class="info-text" style="margin-bottom:0.8rem;">
   Sistema de apoio ao <strong>Guia de Feridas Crônicas</strong> da Prefeitura Municipal de Pelotas,
   desenvolvido em parceria entre a Secretaria Municipal de Saúde e os projetos
-  <strong>Amor à Pele</strong> e
-  <a href="https://www.instagram.com/g10petsaude/" target="_blank">PET UFPel Saúde Digital</a> &mdash;
-  Telemonitoramento de Feridas Crônicas, coordenados pela professora <a href="https://institucional.ufpel.edu.br/servidores/id/2858" target="_blank">Adrize Rutz Porto</a>,
+  <strong>Amor à Pele</strong> e <strong>PET G10 UFPel Telemonitoramento de Feridas Crônicas</strong>, coordenados pela professora <a href="https://institucional.ufpel.edu.br/servidores/id/2858" target="_blank">Adrize Rutz Porto</a>,
   da Faculdade de Enfermagem &ndash; UFPel.
 </p>
 """, unsafe_allow_html=True)
