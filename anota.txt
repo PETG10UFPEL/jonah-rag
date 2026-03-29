@@ -1,0 +1,2 @@
+GDRIVE_FOLDER_ID      = "id da pasta do índice chroma_index.zip"
+GDRIVE_DOCS_FOLDER_ID = "id da pasta raiz com as edições do JONAH"
