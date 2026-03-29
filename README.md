@@ -1,3 +1,3 @@
-﻿# PMP
+﻿# JONAH
 
-App Streamlit (RAG) para planejamento de dieta baseado apenas em PDFs/DOCX do Drive (ou pasta local).
+Embeddings + Rag > JONAH Fen UFPel
