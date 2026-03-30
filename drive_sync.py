@@ -1,6 +1,9 @@
 import os
 from pathlib import Path
 
+import json, os
+info = json.loads(os.getenv("GCP_SERVICE_ACCOUNT_JSON", "{}"))
+
 import streamlit as st
 from dotenv import load_dotenv
 from google.oauth2 import service_account
