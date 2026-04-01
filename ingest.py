@@ -35,16 +35,13 @@ load_dotenv(".env.local", override=True)
 
 BASE_DIR = Path(__file__).resolve().parent
 
-_on_cloud = Path("/mount/src").exists()
-RAW_DIR_DEFAULT  = str(BASE_DIR / "data" / "raw_docs")
-DB_DIR_DEFAULT   = "/tmp/chroma_db" if _on_cloud else str(BASE_DIR / "data" / "chroma_db")
-REGISTRY_FILE    = str(BASE_DIR / "data" / "indexed_files.json")
+_on_cloud       = Path("/mount/src").exists()
+RAW_DIR_DEFAULT = str(BASE_DIR / "data" / "raw_docs")
+DB_DIR_DEFAULT  = "/tmp/chroma_db" if _on_cloud else str(BASE_DIR / "data" / "chroma_db")
+REGISTRY_FILE   = str(BASE_DIR / "data" / "indexed_files.json")
 
-COLLECTION_NAME  = os.getenv("COLLECTION_NAME", "jonah_journal")
-
-# multilingual-e5-base: melhor qualidade de retrieval para PT-BR acadêmico
-# Alternativa mais leve se RAM for crítica: "intfloat/multilingual-e5-small"
-EMBED_MODEL      = os.getenv("EMBED_MODEL", "intfloat/multilingual-e5-base")
+COLLECTION_NAME = os.getenv("COLLECTION_NAME", "jonah_journal")
+EMBED_MODEL     = os.getenv("EMBED_MODEL", "intfloat/multilingual-e5-base")
 
 
 # ---------------------------------------------------------------------------
@@ -118,10 +115,17 @@ def _load_pdf(path: Path, extra_meta: Optional[Dict] = None) -> List[Any]:
 
         reader = PdfReader(str(path))
         docs = []
+        gdrive_file_id = (extra_meta or {}).get("gdrive_file_id", "")
+        gdrive_link = (
+            f"https://drive.google.com/file/d/{gdrive_file_id}/view"
+            if gdrive_file_id else ""
+        )
         base_meta = {
-            "source":    str(path),
-            "filename":  path.name,
-            "tipo_doc":  "artigo_journal",
+            "source":         str(path),
+            "filename":       path.name,
+            "tipo_doc":       "artigo_journal",
+            "gdrive_file_id": gdrive_file_id,
+            "gdrive_link":    gdrive_link,
             **(extra_meta or {}),
         }
 
@@ -131,8 +135,6 @@ def _load_pdf(path: Path, extra_meta: Optional[Dict] = None) -> List[Any]:
             if not text.strip():
                 continue
 
-            # Prefixo obrigatório para o multilingual-e5
-            # O modelo foi treinado com este prefixo e performa muito melhor com ele
             prefixed = f"passage: {text}"
 
             docs.append(Document(
@@ -153,8 +155,9 @@ def _load_pdf(path: Path, extra_meta: Optional[Dict] = None) -> List[Any]:
 # ---------------------------------------------------------------------------
 
 def load_new_docs(
-    raw_dir: str,
-    registry: Dict[str, str],
+    raw_dir:     str,
+    registry:    Dict[str, str],
+    file_id_map: Optional[Dict[str, str]] = None,
 ) -> Tuple[List[Any], List[str], Dict[str, str]]:
     """
     Percorre raw_dir recursivamente.
@@ -183,6 +186,8 @@ def load_new_docs(
             edition_folder = "sem_edicao"
 
         edition_meta = _parse_edition_folder(edition_folder)
+        if file_id_map:
+            edition_meta["gdrive_file_id"] = file_id_map.get(p.name, "")
 
         try:
             file_docs = _load_pdf(p, extra_meta=edition_meta)
@@ -200,8 +205,8 @@ def load_new_docs(
 # ---------------------------------------------------------------------------
 
 def _chunk_docs(
-    docs: List[Any],
-    chunk_size: int = 900,
+    docs:          List[Any],
+    chunk_size:    int = 900,
     chunk_overlap: int = 150,
 ) -> List[Any]:
     from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -253,13 +258,13 @@ def _insert_chunks(vectordb: Any, chunks: List[Any], batch_size: int = 100) -> N
 # ---------------------------------------------------------------------------
 
 def build_index(
-    raw_dir:        str = RAW_DIR_DEFAULT,
-    db_dir:         str = DB_DIR_DEFAULT,
-    chunk_size:     int = 900,
-    chunk_overlap:  int = 150,
+    raw_dir:          str = RAW_DIR_DEFAULT,
+    db_dir:           str = DB_DIR_DEFAULT,
+    chunk_size:       int = 900,
+    chunk_overlap:    int = 150,
     gdrive_folder_id: str = "",
-    clear_existing: bool = False,
-    registry_path:  str = REGISTRY_FILE,
+    clear_existing:   bool = False,
+    registry_path:    str = REGISTRY_FILE,
 ) -> Tuple[int, Optional[Any], bool]:
     """
     Indexa apenas os PDFs novos ou modificados desde a última execução.
@@ -281,7 +286,16 @@ def build_index(
         registry = _load_registry(registry_path)
         print(f"[Registro] {len(registry)} arquivos já indexados.")
 
-    docs, skipped, new_registry = load_new_docs(raw_dir, registry)
+    file_id_map: Dict[str, str] = {}
+    if gdrive_folder_id:
+        try:
+            from drive_sync import get_file_id_map
+            file_id_map = get_file_id_map(gdrive_folder_id)
+            print(f"[Drive] {len(file_id_map)} IDs de arquivo obtidos.")
+        except Exception as e:
+            print(f"[Drive] Nao foi possivel obter IDs: {e}")
+
+    docs, skipped, new_registry = load_new_docs(raw_dir, registry, file_id_map=file_id_map)
 
     if not docs:
         print("Nenhum arquivo novo. Índice já atualizado.")
@@ -300,7 +314,7 @@ def build_index(
     try:
         vectordb.persist()
     except Exception:
-        pass
+        pass  # persist() removido em versões recentes do chromadb — seguro ignorar
 
     _save_registry(new_registry, registry_path)
     print(f"[Registro] Salvo: {len(new_registry)} arquivos no total.")
@@ -331,7 +345,7 @@ def add_edition(
     Indexa apenas uma edição nova sem reprocessar o acervo inteiro.
 
     Uso:
-        from ingest_jonah import add_edition
+        from ingest import add_edition
         add_edition("data/raw_docs/v15n1_2025")
     """
     return build_index(

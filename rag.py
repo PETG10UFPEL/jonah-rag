@@ -31,13 +31,13 @@ try:
 except Exception:
     st = None
 
-GROQ_MODEL         = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
-BASE_DIR           = Path(__file__).resolve().parent
-_on_cloud          = Path("/mount/src").exists()
-DB_DIR_DEFAULT     = "/tmp/chroma_db" if _on_cloud else str(BASE_DIR / "data" / "chroma_db")
-COLLECTION_NAME    = os.getenv("COLLECTION_NAME", "jonah_journal")
+GROQ_MODEL          = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+BASE_DIR            = Path(__file__).resolve().parent
+_on_cloud           = Path("/mount/src").exists()
+DB_DIR_DEFAULT      = "/tmp/chroma_db" if _on_cloud else str(BASE_DIR / "data" / "chroma_db")
+COLLECTION_NAME     = os.getenv("COLLECTION_NAME", "jonah_journal")
 RELEVANCE_THRESHOLD = float(os.getenv("RELEVANCE_THRESHOLD", "0.35"))
-EMBED_MODEL        = os.getenv("EMBED_MODEL", "intfloat/multilingual-e5-base")
+EMBED_MODEL         = os.getenv("EMBED_MODEL", "intfloat/multilingual-e5-base")
 
 # ---------------------------------------------------------------------------
 # Prompt — instrui o Groq a gerar resposta com citações numeradas
@@ -107,7 +107,6 @@ def _build_context(hits_with_score: List[Tuple[Any, float]]) -> str:
         ano      = doc.metadata.get("ano", "")
         filename = doc.metadata.get("filename", source)
 
-        # Remove prefixo "passage: " antes de enviar ao LLM
         content = doc.page_content
         if content.startswith("passage: "):
             content = content[len("passage: "):]
@@ -137,15 +136,18 @@ def _build_source_cards(hits_with_score: List[Tuple[Any, float]]) -> List[Dict]:
         numero   = meta.get("numero", "")
         ano      = meta.get("ano", "")
         page     = meta.get("page", "-")
-        source   = meta.get("source", "")
+        source         = meta.get("source", "")
+        gdrive_file_id = meta.get("gdrive_file_id", "")
+        gdrive_link    = (
+            meta.get("gdrive_link", "") or
+            (f"https://drive.google.com/file/d/{gdrive_file_id}/view" if gdrive_file_id else "")
+        )
 
-        # Snippet limpo (sem prefixo)
         snippet = doc.page_content
         if snippet.startswith("passage: "):
             snippet = snippet[len("passage: "):]
         snippet = snippet.strip()[:350] + ("…" if len(snippet) > 350 else "")
 
-        # Citação ABNT automática (parcial — nome do arquivo como proxy do título)
         titulo_proxy = filename.replace(".pdf", "").replace("_", " ").title()
         abnt = (
             f"{titulo_proxy}. "
@@ -155,18 +157,20 @@ def _build_source_cards(hits_with_score: List[Tuple[Any, float]]) -> List[Dict]:
         )
 
         cards.append({
-            "numero":   i,
-            "filename": filename,
-            "edicao":   edicao,
-            "volume":   volume,
+            "numero":    i,
+            "filename":  filename,
+            "edicao":    edicao,
+            "volume":    volume,
             "numero_ed": numero,
-            "ano":      ano,
-            "page":     page,
-            "score":    round(score, 3),
+            "ano":       ano,
+            "page":      page,
+            "score":     round(score, 3),
             "score_pct": round(score * 100),
-            "snippet":  snippet,
-            "abnt":     abnt,
-            "source":   source,       # caminho completo para botão de download
+            "snippet":   snippet,
+            "abnt":      abnt,
+            "source":         source,
+            "gdrive_file_id": gdrive_file_id,
+            "gdrive_link":    gdrive_link,
         })
     return cards
 
@@ -176,9 +180,11 @@ def _build_source_cards(hits_with_score: List[Tuple[Any, float]]) -> List[Dict]:
 # ---------------------------------------------------------------------------
 
 def answer_structured(
-    question:   str,
-    k:          int = 5,
-    vectordb:   Optional[Any] = None,
+    question: str,
+    k:        int = 5,
+    vectordb: Optional[Any] = None,
+    ano_ini:  Optional[int] = None,
+    ano_fim:  Optional[int] = None,
 ) -> Dict:
     """
     Busca no índice JONAH e gera resposta narrativa com citações [N].
@@ -196,7 +202,6 @@ def answer_structured(
     if not groq_key:
         raise RuntimeError("GROQ_API_KEY não encontrada.")
 
-    # Carrega DB
     if vectordb is not None:
         db = vectordb
     else:
@@ -208,13 +213,31 @@ def answer_structured(
             }
         db = _get_db()
 
-    # Prefixo "query:" obrigatório para o E5
+    # Prefixo "query:" obrigatório para o multilingual-e5
     query_prefixed = f"query: {question}"
     hits_with_score = db.similarity_search_with_relevance_scores(query_prefixed, k=k)
 
-    # Filtra por threshold mas mantém todos para exibição
-    relevant = [(d, s) for d, s in hits_with_score if s >= RELEVANCE_THRESHOLD]
-    to_use   = relevant if relevant else hits_with_score  # fallback: usa tudo
+    def _year_ok(doc) -> bool:
+        if ano_ini is None and ano_fim is None:
+            return True
+        try:
+            ano = int(doc.metadata.get("ano", 0))
+        except (ValueError, TypeError):
+            return True
+        if ano == 0:
+            return True
+        if ano_ini is not None and ano < ano_ini:
+            return False
+        if ano_fim is not None and ano > ano_fim:
+            return False
+        return True
+
+    hits_filtered = [(d, s) for d, s in hits_with_score if _year_ok(d)]
+    if not hits_filtered:
+        hits_filtered = hits_with_score
+
+    relevant = [(d, s) for d, s in hits_filtered if s >= RELEVANCE_THRESHOLD]
+    to_use   = relevant if relevant else hits_filtered  # fallback: usa tudo
 
     if not to_use:
         return {
@@ -224,10 +247,8 @@ def answer_structured(
 
     context = _build_context(to_use)
     cards   = _build_source_cards(to_use)
-
     avg_score = round(sum(s for _, s in to_use) / len(to_use) * 100)
 
-    # Gera resposta narrativa com Groq
     from langchain_groq import ChatGroq
     llm = ChatGroq(model=GROQ_MODEL, groq_api_key=groq_key, temperature=0.15)
 
@@ -237,13 +258,61 @@ def answer_structured(
 CONTEXTO DOS ARTIGOS JONAH (use os números [N] para citar):
 {context}
 """
-    response = llm.invoke([
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user",   "content": user_msg},
-    ])
+    try:
+        response = llm.invoke([
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user",   "content": user_msg},
+        ])
+        narrativa = response.content
+
+    except Exception as e:
+        err = str(e).lower()
+        import re as _re
+        _wait = _re.search(
+            r"(?:try again in|please wait|retry after|wait)\s*([\d]+m[\d]+(?:\.[\d]+)?s|[\d]+(?:\.[\d]+)?s|[\d]+m)",
+            str(e), _re.I
+        )
+        _wait_str = _wait.group(1) if _wait else ""
+
+        if any(t in err for t in ["token", "context_length", "context length",
+                                   "maximum context", "too long"]):
+            narrativa = (
+                "A consulta recuperou trechos demais para processar de uma vez. "
+                "Tente reduzir o n\u00famero de artigos recuperados (filtro \"Artigos recuperados\") "
+                "ou reformule a pergunta de forma mais espec\u00edfica para obter uma resposta mais focada."
+            )
+        elif any(t in err for t in ["rate_limit", "rate limit", "429"]):
+            if _wait_str:
+                narrativa = (
+                    "O limite de requisi\u00e7\u00f5es foi atingido. "
+                    f"O servi\u00e7o estar\u00e1 dispon\u00edvel novamente em {_wait_str}. "
+                    "Aguarde e tente novamente."
+                )
+            else:
+                narrativa = (
+                    "O limite de requisi\u00e7\u00f5es foi atingido. "
+                    "Aguarde alguns instantes e tente novamente."
+                )
+        elif "groq" in err or "api" in err or "503" in err or "502" in err:
+            if _wait_str:
+                narrativa = (
+                    "O servi\u00e7o de intelig\u00eancia artificial est\u00e1 temporariamente indispon\u00edvel. "
+                    f"Previs\u00e3o de retorno em {_wait_str}. "
+                    "Tente novamente em instantes."
+                )
+            else:
+                narrativa = (
+                    "O servi\u00e7o de intelig\u00eancia artificial est\u00e1 temporariamente indispon\u00edvel. "
+                    "Aguarde alguns instantes e tente novamente."
+                )
+        else:
+            narrativa = (
+                "N\u00e3o foi poss\u00edvel gerar a resposta devido a um erro inesperado. "
+                "Tente novamente em alguns instantes."
+            )
 
     return {
-        "narrativa":  response.content,
+        "narrativa":  narrativa,
         "cards":      cards,
         "total_hits": len(to_use),
         "avg_score":  avg_score,
@@ -251,7 +320,7 @@ CONTEXTO DOS ARTIGOS JONAH (use os números [N] para citar):
     }
 
 
-# Mantém compatibilidade com o app.py original
+# Mantém compatibilidade com chamadas legadas
 def answer(
     question:        str,
     patient_summary: str = "",
